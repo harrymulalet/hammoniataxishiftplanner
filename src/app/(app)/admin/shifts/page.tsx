@@ -1,23 +1,28 @@
 
+"use client"; // Added for useTranslation hook
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import AllShiftsView from "@/components/admin/all-shifts-view";
+import { useTranslation } from "@/hooks/useTranslation"; // Added
 
 export default function ManageAllShiftsPage() {
+  const { t } = useTranslation(); // Added
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          All Shifts Overview
+          {t('allShiftsOverview')}
         </h1>
         <p className="text-muted-foreground">
-          View and manage all booked shifts across all drivers and taxis.
+          {t('allShiftsOverviewSubtitle')}
         </p>
       </div>
       
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Booked Shifts</CardTitle>
-          <CardDescription>A comprehensive list of all shifts in the system.</CardDescription>
+          <CardTitle>{t('bookedShifts')}</CardTitle>
+          <CardDescription>{t('bookedShiftsDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <AllShiftsView />
