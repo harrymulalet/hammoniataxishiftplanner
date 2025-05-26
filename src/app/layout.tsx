@@ -28,8 +28,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {/* Default lang, will be updated by LanguageProvider */}
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {/* Default lang, will be updated by LanguageProvider */}
         <LanguageProvider> {/* Added */}
           <AuthProvider>
             {children}
