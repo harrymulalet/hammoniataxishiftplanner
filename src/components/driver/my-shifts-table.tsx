@@ -115,45 +115,54 @@ export default function MyShiftsTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {shifts.map((shift) => (
-            <TableRow key={shift.id}>
-              <TableCell className="font-medium">{shift.taxiLicensePlate}</TableCell>
-              <TableCell>{format(shift.startTime.toDate(), "EEE, MMM d, yyyy")}</TableCell>
-              <TableCell>{format(shift.startTime.toDate(), "p")}</TableCell>
-              <TableCell>{format(shift.endTime.toDate(), "p")}</TableCell>
-              <TableCell className="text-right space-x-2">
-                <Button variant="ghost" size="icon" onClick={() => handleEditShift(shift)} aria-label="Edit shift">
-                  <Edit3 className="h-4 w-4" />
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Delete shift">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the shift for
-                        taxi {shift.taxiLicensePlate} on {format(shift.startTime.toDate(), "PPP")}
-                        from {format(shift.startTime.toDate(), "p")} to {format(shift.endTime.toDate(), "p")}.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDeleteShift(shift.id)}
-                        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </TableCell>
-            </TableRow>
-          ))}
+          {shifts.map((shift) => {
+            const startTimeDate = shift.startTime.toDate();
+            const endTimeDate = shift.endTime.toDate();
+            const startDateStr = startTimeDate.toDateString();
+            const endDateStr = endTimeDate.toDateString();
+            const endTimeDisplay = startDateStr === endDateStr
+              ? format(endTimeDate, "p")
+              : format(endTimeDate, "EEE, MMM d, p");
+
+            return (
+              <TableRow key={shift.id}>
+                <TableCell className="font-medium">{shift.taxiLicensePlate}</TableCell>
+                <TableCell>{format(startTimeDate, "EEE, MMM d, yyyy")}</TableCell>
+                <TableCell>{format(startTimeDate, "p")}</TableCell>
+                <TableCell>{endTimeDisplay}</TableCell>
+                <TableCell className="text-right space-x-2">
+                  <Button variant="ghost" size="icon" onClick={() => handleEditShift(shift)} aria-label="Edit shift">
+                    <Edit3 className="h-4 w-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Delete shift">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the shift for
+                          taxi {shift.taxiLicensePlate} from {format(startTimeDate, "PPP 'at' p")} to {format(endTimeDate, "PPP 'at' p")}.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteShift(shift.id)}
+                          className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
