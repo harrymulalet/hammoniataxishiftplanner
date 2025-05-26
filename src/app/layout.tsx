@@ -27,7 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning> {/* Default lang, will be updated by LanguageProvider */}
+    <html lang="en" suppressHydrationWarning>
+      {/* Default lang, will be updated by LanguageProvider */}
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <LanguageProvider> {/* Added */}
           <AuthProvider>
@@ -39,5 +40,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    
