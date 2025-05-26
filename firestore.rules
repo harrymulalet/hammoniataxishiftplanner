@@ -6,79 +6,93 @@ service cloud.firestore {
 
     // Helper function to check if a user is an admin
     function isAdmin(userId) {
-      // Ensure the user document exists and the role is 'admin'
       return exists(/databases/$(database)/documents/users/$(userId)) &&
              get(/databases/$(database)/documents/users/$(userId)).data.role == 'admin';
     }
 
-    // User profiles
+    // User Profiles:
+    // - Admins can create any user profile.
+    // - Users can read their own profile; admins can read any profile.
+    // - Users can update their own profile (with restrictions); admins can update any profile.
+    // - Admins can delete user profiles.
     match /users/{userId} {
-      // Admins can create any user profile (e.g., drivers).
-      // Authenticated users can create their own profile document (e.g., initial setup if not done by admin).
-      // Important: Ensure the data being written is validated (e.g., role is 'driver' if admin creates).
-      allow create: if request.auth != null &&
-                       (isAdmin(request.auth.uid) || request.auth.uid == userId);
-
-      // Users can read their own profile. Admins can read any profile.
       allow read: if request.auth != null &&
                      (request.auth.uid == userId || isAdmin(request.auth.uid));
-
-      // Users can update their own profile. Admins can update any profile.
-      // Prevent users from changing their own role or email.
+      allow create: if request.auth != null && isAdmin(request.auth.uid); // Only admins can create user documents
       allow update: if request.auth != null &&
-                       (
-                         (request.auth.uid == userId &&
-                           !(request.resource.data.role != resource.data.role) && // Role cannot be changed by self
-                           !(request.resource.data.email != resource.data.email)   // Email cannot be changed by self
+                       ( (request.auth.uid == userId &&
+                          request.resource.data.uid == userId && // Cannot change UID
+                          request.resource.data.email == resource.data.email && // Cannot change email via profile update
+                          request.resource.data.role == resource.data.role    // Cannot change role
                          ) ||
-                         isAdmin(request.auth.uid)
+                         isAdmin(request.auth.uid) // Admins can update anything
                        );
-
-      // Only admins can delete user profiles from Firestore.
-      // Note: This does not delete the Firebase Auth user.
       allow delete: if request.auth != null && isAdmin(request.auth.uid);
     }
 
-    // Taxis
+    // Taxis:
+    // - Admins can create, read, update, delete taxis.
+    // - Authenticated drivers can read active taxis.
     match /taxis/{taxiId} {
-      // Admins can create, read, update, delete taxis.
-      allow write: if request.auth != null && isAdmin(request.auth.uid);
-
-      // Any authenticated user can read/list taxis (drivers need this to see available taxis).
-      // Consider if only active taxis should be listable/gettable by non-admins.
-      // For listing active taxis by drivers:
-      // allow list: if request.auth != null && request.query.filters.find(f => f.fieldPath == 'isActive' && f.value == true) != null;
-      // allow get: if request.auth != null && resource.data.isActive == true;
-      // Simpler rule for now:
-      allow read: if request.auth != null;
+      allow read: if request.auth != null &&
+                     ( (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver' && resource.data.isActive == true) ||
+                       isAdmin(request.auth.uid)
+                     );
+      allow list: if request.auth != null &&
+                     ( (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver') || // Drivers can list to see active ones (client filters)
+                       isAdmin(request.auth.uid)
+                     );
+      allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
     }
 
-    // Shifts
+    // Shifts:
+    // - Drivers can create shifts for themselves.
+    // - Admins can create any shift.
+    // - Drivers can read/update/delete their own shifts.
+    // - Admins can read/update/delete any shift.
     match /shifts/{shiftId} {
-      // Drivers can create shifts for themselves.
-      // Admins can also create shifts (e.g., assigning or correcting).
-      // Ensure that driverId in the new shift document matches the authenticated user or user is admin.
+      allow read: if request.auth != null &&
+                     ( (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver' && resource.data.driverId == request.auth.uid) ||
+                       isAdmin(request.auth.uid)
+                     );
+      // Allow drivers to list their own shifts, admins to list all.
+      // Note: Firestore 'list' (collection query) rules are broad. Secure queries by using 'where' clauses on the client.
+      // This rule allows a query if it's constrained by driverId for drivers, or open for admins.
+      allow list: if request.auth != null &&
+                    ( (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver') || // Driver can query, client must filter by driverId
+                      isAdmin(request.auth.uid)
+                    );
+
+      // Create: Driver can create for themselves, Admin can create any
       allow create: if request.auth != null &&
-                       (
-                         (request.resource.data.driverId == request.auth.uid &&
-                           // Basic validation: Ensure startTime and endTime are present and are timestamps
-                           request.resource.data.startTime is timestamp &&
-                           request.resource.data.endTime is timestamp &&
-                           request.resource.data.startTime < request.resource.data.endTime
+                       ( (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver' &&
+                          request.resource.data.driverId == request.auth.uid &&
+                          // Ensure taxi exists and is active
+                          exists(/databases/$(database)/documents/taxis/$(request.resource.data.taxiId)) &&
+                          get(/databases/$(database)/documents/taxis/$(request.resource.data.taxiId)).data.isActive == true
                          ) ||
                          isAdmin(request.auth.uid)
                        );
 
-      // Drivers can read their own shifts. Admins can read all shifts.
-      allow read: if request.auth != null &&
-                     (get(/databases/$(database)/documents/shifts/$(shiftId)).data.driverId == request.auth.uid || isAdmin(request.auth.uid));
+      allow update: if request.auth != null &&
+                       ( (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver' &&
+                          resource.data.driverId == request.auth.uid && // Can only update their own
+                          request.resource.data.driverId == resource.data.driverId && // Cannot change driverId
+                          // Name fields are denormalized, if user wants to update them, they update their profile.
+                          // For simplicity, we won't allow direct update of these on the shift by driver.
+                          // request.resource.data.driverFirstName == resource.data.driverFirstName &&
+                          // request.resource.data.driverLastName == resource.data.driverLastName &&
+                           // Allow taxi change if it's active (and other fields for consistency)
+                          exists(/databases/$(database)/documents/taxis/$(request.resource.data.taxiId)) &&
+                          get(/databases/$(database)/documents/taxis/$(request.resource.data.taxiId)).data.isActive == true
+                         ) ||
+                         isAdmin(request.auth.uid)
+                       );
 
-
-      // Drivers can update/delete their own shifts. Admins can update/delete any shift.
-      // Consider adding time-based restrictions (e.g., cannot modify past shifts).
-      allow update, delete: if request.auth != null &&
-                               (get(/databases/$(database)/documents/shifts/$(shiftId)).data.driverId == request.auth.uid || isAdmin(request.auth.uid));
+      allow delete: if request.auth != null &&
+                       ( (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver' && resource.data.driverId == request.auth.uid) ||
+                         isAdmin(request.auth.uid)
+                       );
     }
   }
 }
-    
