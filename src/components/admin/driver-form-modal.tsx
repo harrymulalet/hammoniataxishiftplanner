@@ -2,8 +2,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"; // updateProfile not needed for email/pass users directly for these fields
-import { doc, setDoc, serverTimestamp, updateDoc, Timestamp } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth"; 
+import { doc, setDoc, serverTimestamp, updateDoc, Timestamp, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { Loader2, UserPlus, Edit3, Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
-import { employeeTypes, type EmployeeType, type UserProfile } from "@/lib/types";
+import { employeeTypes, type EmployeeType, type UserProfile, type Shift } from "@/lib/types";
 
 const driverSchemaBase = z.object({
   firstName: z.string().min(1, "First name is required."),
@@ -50,7 +50,7 @@ const addDriverSchema = driverSchemaBase.extend({
   password: z.string().min(6, "Password must be at least 6 characters."),
 });
 
-const editDriverSchema = driverSchemaBase; // Password not edited here directly
+const editDriverSchema = driverSchemaBase; 
 
 type AddDriverFormValues = z.infer<typeof addDriverSchema>;
 type EditDriverFormValues = z.infer<typeof editDriverSchema>;
@@ -59,7 +59,7 @@ interface AddDriverModalProps {
   isOpen?: boolean;
   setIsOpen?: (open: boolean) => void;
   driverToEdit?: UserProfile | null;
-  onClose?: () => void; // To reset driverToEdit state
+  onClose?: () => void; 
 }
 
 export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: setControlledIsOpen, driverToEdit, onClose }: AddDriverModalProps) {
@@ -96,7 +96,7 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
       form.reset({
         firstName: driverToEdit.firstName,
         lastName: driverToEdit.lastName,
-        email: driverToEdit.email, // Email should not be editable for existing user in Firestore auth
+        email: driverToEdit.email, 
         employeeType: driverToEdit.employeeType,
       });
     } else {
@@ -115,15 +115,35 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
     setIsLoading(true);
     try {
       if (isEditing && driverToEdit) {
-        // Update existing driver's Firestore profile
         const driverRef = doc(db, "users", driverToEdit.uid);
-        await updateDoc(driverRef, {
+        const updatedProfileData: Partial<UserProfile> = {
           firstName: data.firstName,
           lastName: data.lastName,
-          // email: data.email, // Firebase Auth email is source of truth, don't update here unless also updating Auth
           employeeType: data.employeeType,
-        });
+        };
+        await updateDoc(driverRef, updatedProfileData);
         toast({ title: "Success", description: "Driver profile updated successfully." });
+
+        // Check if name changed and update shifts
+        const nameChanged = data.firstName !== driverToEdit.firstName || data.lastName !== driverToEdit.lastName;
+        if (nameChanged) {
+          toast({ title: "Updating Shifts", description: "Updating driver name in associated shifts..." });
+          const shiftsQuery = query(collection(db, "shifts"), where("driverId", "==", driverToEdit.uid));
+          const shiftsSnapshot = await getDocs(shiftsQuery);
+          
+          if (!shiftsSnapshot.empty) {
+            const batch = writeBatch(db);
+            shiftsSnapshot.forEach(shiftDoc => {
+              batch.update(shiftDoc.ref, { 
+                driverFirstName: data.firstName, 
+                driverLastName: data.lastName 
+              });
+            });
+            await batch.commit();
+            toast({ title: "Shifts Updated", description: "Driver's name has been updated in their shifts." });
+          }
+        }
+
       } else {
         // Add new driver
         const addData = data as AddDriverFormValues;
@@ -166,7 +186,7 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      {!driverToEdit && ( // Only show DialogTrigger if not controlled for editing
+      {!driverToEdit && ( 
         <DialogTrigger asChild>
           <Button>
             <UserPlus className="mr-2 h-4 w-4" /> Add New Driver
@@ -287,3 +307,4 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
     </Dialog>
   );
 }
+
