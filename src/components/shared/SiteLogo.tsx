@@ -6,12 +6,12 @@ export default function SiteLogo({ className, ...props }: SVGProps<SVGSVGElement
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 410 50" // Adjusted viewBox width to accommodate longer text
+      viewBox="0 0 370 50" // Adjusted viewBox width for shorter text
       className={cn("fill-current text-primary", className)}
-      aria-label="Hammonia Taxi ShiftCycle Logo" // Updated aria-label
+      aria-label="Hammonia Taxi Shift Logo" // Updated aria-label
       {...props}
     >
-      <title>Hammonia Taxi ShiftCycle Logo</title> {/* Updated title */}
+      <title>Hammonia Taxi Shift Logo</title> {/* Updated title */}
       {/* Simple placeholder logo - Replace with actual SVG if available */}
       <rect width="50" height="50" rx="8" ry="8" className="text-accent" fill="currentColor" />
       <circle cx="25" cy="25" r="10" className="text-primary-foreground" fill="currentColor" />
@@ -23,7 +23,7 @@ export default function SiteLogo({ className, ...props }: SVGProps<SVGSVGElement
         fontWeight="bold"
         className="text-foreground" fill="currentColor"
       >
-        Hammonia Taxi ShiftCycle
+        Hammonia Taxi Shift
       </text>
     </svg>
   );
