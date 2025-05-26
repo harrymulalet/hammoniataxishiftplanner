@@ -74,7 +74,7 @@ export const uiStrings = {
   errorBookingShift: "Could not book shift(s).",
   bookingConflictTitle: "Booking Conflict",
   bookingConflictDescription: "Taxi is already booked for {date} between {startTime} and {endTime}.",
-  endTimeAfterStartTime: "End time must be after start time.",
+  endTimeAfterStartTime: "End time must be after start time (or on the next day for overnight shifts).",
   shiftDurationMax10Hours: "Shift duration cannot exceed 10 hours.",
   // Admin General
   admin: "Admin",
@@ -178,8 +178,7 @@ export const uiStrings = {
 export const translations: Record<Locale, typeof uiStrings> = {
   en: uiStrings, // English uses the base uiStrings
   de: {
-    appName: "ShiftCycle",
-    // Common
+    ...uiStrings, // Start with English strings and override
     actions: "Aktionen",
     cancel: "Abbrechen",
     delete: "Löschen",
@@ -197,11 +196,9 @@ export const translations: Record<Locale, typeof uiStrings> = {
     clearDate: "Datum löschen",
     areYouSure: "Sind Sie sicher?",
     cannotBeUndone: "Diese Aktion kann nicht rückgängig gemacht werden.",
-    // Navbar
     logout: "Abmelden",
     toggleNavigation: "Navigation umschalten",
     userProfile: "Benutzerprofil",
-    // Login Page
     loginPageTitle: "Bei Hammonia Taxi Shift anmelden",
     loginPageSubtitle: "Verwalten Sie Ihre Taxi-Schichten effizient.",
     emailAddressLabel: "E-Mail-Adresse",
@@ -212,13 +209,11 @@ export const translations: Record<Locale, typeof uiStrings> = {
     forgotPasswordLink: "Passwort vergessen?",
     showPassword: "Passwort anzeigen",
     hidePassword: "Passwort ausblenden",
-    // Auth related toasts
     loginSuccessful: "Anmeldung erfolgreich",
     welcomeBack: "Willkommen zurück bei ShiftCycle!",
     loginFailed: "Anmeldung fehlgeschlagen",
     forgotPasswordToastTitle: "Passwort vergessen",
     forgotPasswordToastDesc: "Die Funktion zum Zurücksetzen des Passworts wäre hier.",
-    // Driver Dashboard
     driverDashboardTitle: "Fahrer-Dashboard",
     driverDashboardWelcome: "Willkommen, {firstName}! Verwalten Sie hier Ihre Schichten und Buchungen.",
     myUpcomingShifts: "Meine bevorstehenden Schichten",
@@ -237,7 +232,6 @@ export const translations: Record<Locale, typeof uiStrings> = {
     editShiftToastMessage: "Bearbeite Schicht für {taxiLicensePlate} am {date}. (Bearbeitungsfunktion in diesem Beispiel nicht vollständig implementiert)",
     noTaxisActive: "Derzeit sind keine Taxis als aktiv markiert.",
     loadingTaxis: "Lade Taxis...",
-    // Taxi Booking Modal
     bookTaxiShiftTitle: "Taxischicht buchen",
     bookTaxiShiftDescription: "Wählen Sie ein Taxi, Datum/Daten und eine Zeit für Ihre Schicht. Max. 10 Stunden pro Schicht.",
     selectATaxi: "Ein Taxi auswählen",
@@ -246,16 +240,13 @@ export const translations: Record<Locale, typeof uiStrings> = {
     errorBookingShift: "Schicht(en) konnten nicht gebucht werden.",
     bookingConflictTitle: "Buchungskonflikt",
     bookingConflictDescription: "Das Taxi ist bereits für den {date} zwischen {startTime} und {endTime} gebucht.",
-    endTimeAfterStartTime: "Die Endzeit muss nach der Startzeit liegen.",
+    endTimeAfterStartTime: "Die Endzeit muss nach der Startzeit liegen (oder am nächsten Tag für Nachtschichten).",
     shiftDurationMax10Hours: "Die Schichtdauer darf 10 Stunden nicht überschreiten.",
-    // Admin General
     admin: "Admin",
-    // Admin Sidebar
     adminDrivers: "Fahrer",
     adminTaxis: "Taxis",
     adminAllShifts: "Alle Schichten",
     adminAnalytics: "Analysen",
-    // Admin Drivers Page
     driverManagement: "Fahrerverwaltung",
     driverManagementSubtitle: "Fahrerkonten erstellen, anzeigen und verwalten.",
     allDrivers: "Alle Fahrer",
@@ -271,7 +262,6 @@ export const translations: Record<Locale, typeof uiStrings> = {
     deleteProfile: "Profil löschen",
     partialDeletion: "Teilweise Löschung",
     partialDeletionDesc: "Fahrerprofil in der Datenbank gelöscht. Firebase Auth-Benutzer muss für vollständige Entfernung manuell aus der Firebase-Konsole gelöscht werden.",
-    // Admin Driver Form Modal
     addDriverModalTitle: "Neuen Fahrer hinzufügen",
     addDriverModalDescription: "Geben Sie die Details für den neuen Fahrer ein. Der Fahrer wird diese E-Mail und dieses Passwort zum Anmelden verwenden.",
     editDriverModalTitle: "Fahrerprofil bearbeiten",
@@ -287,7 +277,6 @@ export const translations: Record<Locale, typeof uiStrings> = {
     driverCreated: "Fahrer erstellt",
     driverCreatedDesc: "{firstName} {lastName} hinzugefügt. Passwort: {password} (Bitte sicher kommunizieren und Fahrer anweisen, es zu ändern).",
     saveChanges: "Änderungen speichern",
-     // Admin Taxis Page
     taxiManagement: "Taxiverwaltung",
     taxiManagementSubtitle: "Taxifahrzeuge hinzufügen, anzeigen und verwalten.",
     allTaxis: "Alle Taxis",
@@ -302,7 +291,6 @@ export const translations: Record<Locale, typeof uiStrings> = {
     editTaxi: "Taxi bearbeiten",
     deleteTaxi: "Taxi löschen",
     deleteTaxiConfirmationMessage: "Dies löscht das Taxi mit dem Kennzeichen {licensePlate} dauerhaft. Diese Aktion kann nicht rückgängig gemacht werden. Erwägen Sie stattdessen die Deaktivierung, wenn es später verwendet werden könnte.",
-    // Admin Taxi Form Modal
     addTaxiModalTitle: "Neues Taxi hinzufügen",
     addTaxiModalDescription: "Geben Sie das Kennzeichen für das neue Taxi ein.",
     editTaxiModalTitle: "Taxi bearbeiten",
@@ -314,7 +302,6 @@ export const translations: Record<Locale, typeof uiStrings> = {
     taxiUpdatedSuccessfully: "Taxi erfolgreich aktualisiert.",
     taxiAddedSuccessfully: "Taxi erfolgreich hinzugefügt.",
     taxiExistsError: "Ein Taxi mit diesem Kennzeichen existiert bereits.",
-    // Admin All Shifts Page
     allShiftsOverview: "Übersicht aller Schichten",
     allShiftsOverviewSubtitle: "Alle gebuchten Schichten aller Fahrer und Taxis anzeigen und verwalten.",
     bookedShifts: "Gebuchte Schichten",
@@ -329,7 +316,6 @@ export const translations: Record<Locale, typeof uiStrings> = {
     shiftDeletedSuccessfully: "Schicht erfolgreich gelöscht.",
     errorDeletingShift: "Schicht konnte nicht gelöscht werden.",
     deleteShiftAdminConfirmation: "Dies löscht dauerhaft die Schicht für {driverName} im Taxi {taxiLicensePlate} ({dateTime}). Diese Aktion kann nicht rückgängig gemacht werden.",
-    // Admin Analytics Page
     analyticsDashboard: "Analyse-Dashboard",
     analyticsDashboardSubtitle: "Visualisieren Sie Schichtdaten und Taxiauslastung.",
     shiftsPerDriver: "Schichten pro Fahrer",
@@ -341,13 +327,10 @@ export const translations: Record<Locale, typeof uiStrings> = {
     noShiftDataForChart: "Keine Schichtdaten zur Anzeige verfügbar.",
     noRecentShiftDataForChart: "Keine aktuellen Schichtdaten zur Anzeige verfügbar.",
     noTaxiUtilizationData: "Keine Taxiauslastungsdaten verfügbar.",
-    // Employee Types
     employeeTypeFullTime: "Vollzeit Mitarbeiter",
     employeeTypePartTime: "Aushilfe",
     employeeTypeOther: "Sonstiges",
   },
 };
-
-    
 
     
