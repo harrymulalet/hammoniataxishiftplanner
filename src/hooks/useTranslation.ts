@@ -2,8 +2,9 @@
 // src/hooks/useTranslation.ts
 "use client";
 
+import { useCallback } from 'react'; // Added useCallback import
 import { useLanguage } from '@/contexts/LanguageContext';
-import { translations, uiStrings, type Locale } from '@/lib/translations';
+import { translations, uiStrings, type Locale, defaultLocale } from '@/lib/translations';
 
 // Define a type for the translation keys
 export type TranslationKey = keyof typeof uiStrings;
