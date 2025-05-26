@@ -9,11 +9,13 @@ import { db } from "@/lib/firebase";
 import type { Taxi } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation"; // Added
 
 export default function AvailableTaxisList() {
   const [taxis, setTaxis] = useState<Taxi[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useTranslation(); // Added
 
   useEffect(() => {
     setIsLoading(true);
@@ -26,24 +28,24 @@ export default function AvailableTaxisList() {
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching taxis:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not load available taxis." });
+      toast({ variant: "destructive", title: t('error'), description: t('loadingTaxis') });
       setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, [toast, t]);
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-6">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <p className="ml-2 text-sm">Loading taxis...</p>
+        <p className="ml-2 text-sm">{t('loadingTaxis')}</p>
       </div>
     );
   }
 
   if (taxis.length === 0) {
-    return <p className="text-center text-sm text-muted-foreground py-6">No taxis are currently marked as active.</p>;
+    return <p className="text-center text-sm text-muted-foreground py-6">{t('noTaxisActive')}</p>;
   }
 
   return (

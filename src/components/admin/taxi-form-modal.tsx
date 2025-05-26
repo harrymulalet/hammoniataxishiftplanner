@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { db } from "@/lib/firebase";
 import type { Taxi } from "@/lib/types";
+import { useTranslation } from "@/hooks/useTranslation"; // Added
 
 const taxiSchema = z.object({
   licensePlate: z.string().min(3, "License plate must be at least 3 characters.").max(15, "License plate too long.")
@@ -57,6 +58,7 @@ export default function AddTaxiModal({ isOpen: controlledIsOpen, setIsOpen: setC
   const [isLoading, setIsLoading] = useState(false);
   const { userProfile } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation(); // Added
 
   const isEditing = !!taxiToEdit;
   
@@ -91,7 +93,7 @@ export default function AddTaxiModal({ isOpen: controlledIsOpen, setIsOpen: setC
 
   async function onSubmit(data: TaxiFormValues) {
     if (!userProfile) {
-      toast({ variant: "destructive", title: "Error", description: "Admin user not found." });
+      toast({ variant: "destructive", title: t('error'), description: t('adminUserNotFound') });
       return;
     }
     setIsLoading(true);
@@ -100,24 +102,18 @@ export default function AddTaxiModal({ isOpen: controlledIsOpen, setIsOpen: setC
       const normalizedPlate = normalizeLicensePlate(data.licensePlate);
 
       if (isEditing && taxiToEdit) {
-        // If license plate changed, it means ID changes. This is complex.
-        // Typically, ID (normalized plate) should be immutable or handled with care (delete old, create new).
-        // For simplicity, if plate changes, we update. If ID was normalized plate, this is fine.
-        // If ID was auto-generated, this needs different logic if normalizedPlate is the ID.
-        // Assuming taxiToEdit.id IS the normalized old plate.
-        const taxiRef = doc(db, "taxis", taxiToEdit.id); // Use existing ID for update
+        const taxiRef = doc(db, "taxis", taxiToEdit.id); 
         await updateDoc(taxiRef, {
-          licensePlate: data.licensePlate, // Store the display version
+          licensePlate: data.licensePlate, 
           isActive: data.isActive,
         });
-        toast({ title: "Success", description: "Taxi updated successfully." });
+        toast({ title: t('success'), description: t('taxiUpdatedSuccessfully') });
 
       } else {
-         // Check if taxi with this normalized license plate already exists
         const taxiRef = doc(db, "taxis", normalizedPlate);
         const taxiSnap = await getDocs(query(collection(db, "taxis"), where("licensePlate", "==", data.licensePlate)));
         if (!taxiSnap.empty && taxiSnap.docs.some(d => d.id === normalizedPlate)) {
-          toast({ variant: "destructive", title: "Error", description: "A taxi with this license plate already exists." });
+          toast({ variant: "destructive", title: t('error'), description: t('taxiExistsError') });
           setIsLoading(false);
           return;
         }
@@ -128,14 +124,15 @@ export default function AddTaxiModal({ isOpen: controlledIsOpen, setIsOpen: setC
           createdAt: serverTimestamp() as Timestamp,
           createdBy: userProfile.uid,
         });
-        toast({ title: "Success", description: "Taxi added successfully." });
+        toast({ title: t('success'), description: t('taxiAddedSuccessfully') });
       }
       form.reset({ licensePlate: "", isActive: true });
       setIsOpen(false);
       if (onClose) onClose();
     } catch (error: any) {
       console.error(`Error ${isEditing ? 'updating' : 'adding'} taxi:`, error);
-      toast({ variant: "destructive", title: "Error", description: error.message || `Could not ${isEditing ? 'update' : 'add'} taxi.` });
+      const errorMessageKey = isEditing ? 'errorUpdatingTaxi' : 'errorAddingTaxi';
+      toast({ variant: "destructive", title: t('error'), description: error.message || t(errorMessageKey) });
     } finally {
       setIsLoading(false);
     }
@@ -153,15 +150,15 @@ export default function AddTaxiModal({ isOpen: controlledIsOpen, setIsOpen: setC
       {!taxiToEdit && (
         <DialogTrigger asChild>
           <Button>
-            <Car className="mr-2 h-4 w-4" /> Add New Taxi
+            <Car className="mr-2 h-4 w-4" /> {t('addNewTaxi')}
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Taxi" : "Add New Taxi"}</DialogTitle>
+          <DialogTitle>{isEditing ? t('editTaxiModalTitle') : t('addTaxiModalTitle')}</DialogTitle>
           <DialogDescription>
-            {isEditing ? "Update the taxi details." : "Enter the license plate for the new taxi."}
+            {isEditing ? t('editTaxiModalDescription') : t('addTaxiModalDescription')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -171,8 +168,8 @@ export default function AddTaxiModal({ isOpen: controlledIsOpen, setIsOpen: setC
               name="licensePlate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>License Plate</FormLabel>
-                  <FormControl><Input placeholder="HH-AB 123" {...field} /></FormControl>
+                  <FormLabel>{t('licensePlateLabel')}</FormLabel>
+                  <FormControl><Input placeholder={t('licensePlatePlaceholder')} {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -183,9 +180,9 @@ export default function AddTaxiModal({ isOpen: controlledIsOpen, setIsOpen: setC
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                   <div className="space-y-0.5">
-                    <FormLabel>Active</FormLabel>
+                    <FormLabel>{t('activeLabel')}</FormLabel>
                     <p className="text-xs text-muted-foreground">
-                      Is this taxi currently active and available for bookings?
+                      {t('activeDescription')}
                     </p>
                   </div>
                   <FormControl>
@@ -198,10 +195,10 @@ export default function AddTaxiModal({ isOpen: controlledIsOpen, setIsOpen: setC
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => { setIsOpen(false); if (onClose) onClose(); }}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => { setIsOpen(false); if (onClose) onClose(); }}>{t('cancel')}</Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (isEditing ? <Edit3 className="mr-2 h-4 w-4" /> : <Car className="mr-2 h-4 w-4" />)}
-                {isEditing ? "Save Changes" : "Add Taxi"}
+                {isEditing ? t('saveChanges') : t('addNewTaxi')}
               </Button>
             </DialogFooter>
           </form>

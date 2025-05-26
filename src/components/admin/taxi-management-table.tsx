@@ -30,8 +30,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
-import AddTaxiModal from "./taxi-form-modal"; // Re-use for editing
+import AddTaxiModal from "./taxi-form-modal"; 
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/hooks/useTranslation"; // Added
 
 
 export default function TaxiManagementTable() {
@@ -41,6 +42,7 @@ export default function TaxiManagementTable() {
   const [editingTaxi, setEditingTaxi] = useState<Taxi | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation(); // Added
 
   useEffect(() => {
      if (authLoading) {
@@ -61,33 +63,32 @@ export default function TaxiManagementTable() {
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching taxis:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not load taxi data." });
+      toast({ variant: "destructive", title: t('error'), description: "Could not load taxi data." });
       setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, [adminProfile, authLoading, toast]);
+  }, [adminProfile, authLoading, toast, t]);
 
   const handleDeleteTaxi = async (taxiId: string) => {
-    // Consider implications: what happens to shifts booked for this taxi?
-    // For now, simple delete.
     try {
       await deleteDoc(doc(db, "taxis", taxiId));
-      toast({ title: "Success", description: "Taxi deleted successfully." });
+      toast({ title: t('success'), description: t('taxiDeletedSuccessfully') });
     } catch (error) {
       console.error("Error deleting taxi:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not delete taxi." });
+      toast({ variant: "destructive", title: t('error'), description: "Could not delete taxi." });
     }
   };
 
   const handleToggleActive = async (taxi: Taxi) => {
     const taxiRef = doc(db, "taxis", taxi.id);
+    const newStatus = !taxi.isActive;
     try {
-      await updateDoc(taxiRef, { isActive: !taxi.isActive });
-      toast({ title: "Success", description: `Taxi ${taxi.licensePlate} ${!taxi.isActive ? 'activated' : 'deactivated'}.` });
+      await updateDoc(taxiRef, { isActive: newStatus });
+      toast({ title: t('success'), description: t('taxiStatusUpdated', { licensePlate: taxi.licensePlate, status: newStatus ? t('activated') : t('deactivated')}) });
     } catch (error) {
       console.error("Error updating taxi status:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not update taxi status." });
+      toast({ variant: "destructive", title: t('error'), description: t('errorUpdatingTaxiStatus') });
     }
   };
   
@@ -101,13 +102,13 @@ export default function TaxiManagementTable() {
     return (
       <div className="flex justify-center items-center py-10">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-2">Loading taxis...</p>
+        <p className="ml-2">{t('loadingTaxisAdmin')}</p>
       </div>
     );
   }
 
   if (taxis.length === 0) {
-    return <p className="text-center text-muted-foreground py-10">No taxis found. Add one to get started.</p>;
+    return <p className="text-center text-muted-foreground py-10">{t('noTaxisFound')}</p>;
   }
 
   return (
@@ -116,9 +117,9 @@ export default function TaxiManagementTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>License Plate</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t('licensePlate')}</TableHead>
+              <TableHead>{t('status')}</TableHead>
+              <TableHead className="text-right">{t('actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -131,38 +132,37 @@ export default function TaxiManagementTable() {
                       id={`active-switch-${taxi.id}`}
                       checked={taxi.isActive}
                       onCheckedChange={() => handleToggleActive(taxi)}
-                      aria-label={taxi.isActive ? "Deactivate taxi" : "Activate taxi"}
+                      aria-label={taxi.isActive ? t('deactivateTaxi') : t('activateTaxi')}
                     />
                      <Badge variant={taxi.isActive ? "default" : "secondary"} className={taxi.isActive ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}>
-                        {taxi.isActive ? "Active" : "Inactive"}
+                        {taxi.isActive ? t('active') : t('inactive')}
                      </Badge>
                   </div>
                 </TableCell>
                 <TableCell className="text-right space-x-2">
-                   <Button variant="ghost" size="icon" onClick={() => handleEditTaxi(taxi)} aria-label="Edit taxi">
+                   <Button variant="ghost" size="icon" onClick={() => handleEditTaxi(taxi)} aria-label={t('editTaxi')}>
                     <Edit3 className="h-4 w-4" />
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Delete taxi">
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label={t('deleteTaxi')}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogTitle>{t('areYouSure')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will permanently delete the taxi with license plate {taxi.licensePlate}.
-                          This action cannot be undone. Consider deactivating it instead if it might be used later.
+                          {t('deleteTaxiConfirmationMessage', { licensePlate: taxi.licensePlate })}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleDeleteTaxi(taxi.id)}
                           className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                         >
-                          Delete Taxi
+                          {t('deleteTaxi')}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

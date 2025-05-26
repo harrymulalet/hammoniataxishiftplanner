@@ -29,7 +29,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import AddDriverModal from "./driver-form-modal"; // Re-use for editing
+import AddDriverModal from "./driver-form-modal"; 
+import { useTranslation } from "@/hooks/useTranslation"; // Added
 
 export default function DriverManagementTable() {
   const { userProfile: adminProfile, loading: authLoading } = useAuth();
@@ -38,6 +39,7 @@ export default function DriverManagementTable() {
   const [editingDriver, setEditingDriver] = useState<UserProfile | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation(); // Added
 
   useEffect(() => {
     if (authLoading) {
@@ -46,7 +48,6 @@ export default function DriverManagementTable() {
     }
     if (!adminProfile || adminProfile.role !== 'admin') {
         setIsLoading(false);
-        // Optional: Show message or redirect if not admin, though layout should handle this.
         return;
     }
 
@@ -60,31 +61,26 @@ export default function DriverManagementTable() {
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching drivers:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not load driver data." });
+      toast({ variant: "destructive", title: t('error'), description: "Could not load driver data." });
       setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, [adminProfile, authLoading, toast]);
+  }, [adminProfile, authLoading, toast, t]);
 
   const handleDeleteDriver = async (driverId: string) => {
-    // IMPORTANT: Deleting a Firebase Auth user requires Admin SDK (backend) or re-authentication.
-    // This function will only delete the Firestore user profile.
-    // For a full solution, a Cloud Function would be needed to delete the Auth user.
-    // Here, we'll show a warning.
     toast({
       variant: "default",
-      title: "Partial Deletion",
-      description: "Driver profile in database deleted. Firebase Auth user must be deleted manually from Firebase Console for full removal.",
+      title: t('partialDeletion'),
+      description: t('partialDeletionDesc'),
       duration: 7000,
     });
     try {
       await deleteDoc(doc(db, "users", driverId));
-      // Consider also deleting associated shifts or reassigning them.
-      toast({ title: "Success", description: "Driver profile deleted." });
+      toast({ title: t('success'), description: t('deleteProfile') });
     } catch (error) {
       console.error("Error deleting driver profile:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not delete driver profile." });
+      toast({ variant: "destructive", title: t('error'), description: "Could not delete driver profile." });
     }
   };
 
@@ -97,13 +93,13 @@ export default function DriverManagementTable() {
     return (
       <div className="flex justify-center items-center py-10">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-2">Loading drivers...</p>
+        <p className="ml-2">{t('loadingDrivers')}</p>
       </div>
     );
   }
 
   if (drivers.length === 0) {
-    return <p className="text-center text-muted-foreground py-10">No drivers found.</p>;
+    return <p className="text-center text-muted-foreground py-10">{t('noDriversFound')}</p>;
   }
 
   return (
@@ -112,10 +108,10 @@ export default function DriverManagementTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Employee Type</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t('driverName')}</TableHead>
+              <TableHead>{t('emailAddressLabel')}</TableHead>
+              <TableHead>{t('employeeType')}</TableHead>
+              <TableHead className="text-right">{t('actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -123,33 +119,31 @@ export default function DriverManagementTable() {
               <TableRow key={driver.uid}>
                 <TableCell className="font-medium">{driver.firstName} {driver.lastName}</TableCell>
                 <TableCell>{driver.email}</TableCell>
-                <TableCell>{driver.employeeType || 'N/A'}</TableCell>
+                <TableCell>{driver.employeeType ? t(driver.employeeType as 'employeeTypeFullTime' | 'employeeTypePartTime' | 'employeeTypeOther') : 'N/A'}</TableCell>
                 <TableCell className="text-right space-x-2">
-                  <Button variant="ghost" size="icon" onClick={() => handleEditDriver(driver)} aria-label="Edit driver">
+                  <Button variant="ghost" size="icon" onClick={() => handleEditDriver(driver)} aria-label={t('editDriver')}>
                     <Edit3 className="h-4 w-4" />
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Delete driver">
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label={t('deleteDriver')}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogTitle>{t('areYouSure')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will delete the driver profile for {driver.firstName} {driver.lastName}.
-                          The Firebase Authentication user account will need to be deleted manually from the Firebase Console.
-                          This action cannot be undone.
+                          {t('deleteDriverProfileConfirmationMessage', { firstName: driver.firstName, lastName: driver.lastName })}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleDeleteDriver(driver.uid)}
                           className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                         >
-                          Delete Profile
+                          {t('deleteProfile')}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

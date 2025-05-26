@@ -38,6 +38,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
 import { employeeTypes, type EmployeeType, type UserProfile, type Shift } from "@/lib/types";
+import { useTranslation } from "@/hooks/useTranslation"; // Added
 
 const driverSchemaBase = z.object({
   firstName: z.string().min(1, "First name is required."),
@@ -67,6 +68,7 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation(); // Added
 
   const isEditing = !!driverToEdit;
   const currentSchema = isEditing ? editDriverSchema : addDriverSchema;
@@ -122,12 +124,11 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
           employeeType: data.employeeType,
         };
         await updateDoc(driverRef, updatedProfileData);
-        toast({ title: "Success", description: "Driver profile updated successfully." });
+        toast({ title: t('success'), description: t('driverProfileUpdatedSuccessfully') });
 
-        // Check if name changed and update shifts
         const nameChanged = data.firstName !== driverToEdit.firstName || data.lastName !== driverToEdit.lastName;
         if (nameChanged) {
-          toast({ title: "Updating Shifts", description: "Updating driver name in associated shifts..." });
+          toast({ title: t('updatingShifts'), description: t('updatingShiftsDesc') });
           const shiftsQuery = query(collection(db, "shifts"), where("driverId", "==", driverToEdit.uid));
           const shiftsSnapshot = await getDocs(shiftsQuery);
           
@@ -140,12 +141,11 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
               });
             });
             await batch.commit();
-            toast({ title: "Shifts Updated", description: "Driver's name has been updated in their shifts." });
+            toast({ title: t('shiftsUpdated'), description: t('shiftsUpdatedDesc') });
           }
         }
 
       } else {
-        // Add new driver
         const addData = data as AddDriverFormValues;
         const userCredential = await createUserWithEmailAndPassword(auth, addData.email, addData.password!);
         const newDriver = userCredential.user;
@@ -160,8 +160,8 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
           createdAt: serverTimestamp() as Timestamp,
         });
         toast({
-          title: "Driver Created",
-          description: `${addData.firstName} ${addData.lastName} added. Password: ${addData.password} (Please communicate securely and advise driver to change it).`,
+          title: t('driverCreatedSuccessfully'),
+          description: t('driverCreatedDesc', { firstName: addData.firstName, lastName: addData.lastName, password: addData.password! }),
           duration: 10000,
         });
       }
@@ -170,7 +170,8 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
       if (onClose) onClose();
     } catch (error: any) {
       console.error(`Error ${isEditing ? 'updating' : 'adding'} driver:`, error);
-      toast({ variant: "destructive", title: "Error", description: error.message || `Could not ${isEditing ? 'update' : 'add'} driver.` });
+      const errorMessageKey = isEditing ? 'errorUpdatingDriver' : 'errorAddingDriver';
+      toast({ variant: "destructive", title: t('error'), description: error.message || t(errorMessageKey) });
     } finally {
       setIsLoading(false);
     }
@@ -189,15 +190,15 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
       {!driverToEdit && ( 
         <DialogTrigger asChild>
           <Button>
-            <UserPlus className="mr-2 h-4 w-4" /> Add New Driver
+            <UserPlus className="mr-2 h-4 w-4" /> {t('addNewDriver')}
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Driver Profile" : "Add New Driver"}</DialogTitle>
+          <DialogTitle>{isEditing ? t('editDriverModalTitle') : t('addDriverModalTitle')}</DialogTitle>
           <DialogDescription>
-            {isEditing ? "Update the driver's details." : "Enter the details for the new driver. The driver will use this email and password to log in."}
+            {isEditing ? t('editDriverModalDescription') : t('addDriverModalDescription')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -208,8 +209,8 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl><Input placeholder="John" {...field} /></FormControl>
+                    <FormLabel>{t('firstNameLabel')}</FormLabel>
+                    <FormControl><Input placeholder={t('firstNamePlaceholder')} {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -219,8 +220,8 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl><Input placeholder="Doe" {...field} /></FormControl>
+                    <FormLabel>{t('lastNameLabel')}</FormLabel>
+                    <FormControl><Input placeholder={t('lastNamePlaceholder')} {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -231,9 +232,9 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl><Input type="email" placeholder="driver@example.com" {...field} disabled={isEditing} /></FormControl>
-                  {isEditing && <p className="text-xs text-muted-foreground">Email cannot be changed for existing users.</p>}
+                  <FormLabel>{t('emailAddressLabel')}</FormLabel>
+                  <FormControl><Input type="email" placeholder={t('emailPlaceholder')} {...field} disabled={isEditing} /></FormControl>
+                  {isEditing && <p className="text-xs text-muted-foreground">{t('emailCannotBeChanged')}</p>}
                   <FormMessage />
                 </FormItem>
               )}
@@ -244,12 +245,12 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{t('passwordLabel')}</FormLabel>
                      <FormControl>
                         <div className="relative">
                         <Input
                             type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
+                            placeholder={t('passwordPlaceholder')}
                             {...field}
                         />
                         <Button
@@ -258,12 +259,14 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
                             size="sm"
                             className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                             onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? t('hidePassword') : t('showPassword')}
                         >
                             {showPassword ? (
                             <EyeOff className="h-4 w-4" aria-hidden="true" />
                             ) : (
                             <Eye className="h-4 w-4" aria-hidden="true" />
                             )}
+                            <span className="sr-only">{showPassword ? t('hidePassword') : t('showPassword')}</span>
                         </Button>
                         </div>
                     </FormControl>
@@ -277,16 +280,16 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
               name="employeeType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Employee Type</FormLabel>
+                  <FormLabel>{t('employeeTypeLabel')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select employee type" />
+                        <SelectValue placeholder={t('selectEmployeeTypePlaceholder')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {employeeTypes.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                        <SelectItem key={type} value={type}>{t(type as 'employeeTypeFullTime' | 'employeeTypePartTime' | 'employeeTypeOther')}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -295,10 +298,10 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => { setIsOpen(false); if (onClose) onClose(); }}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => { setIsOpen(false); if (onClose) onClose(); }}>{t('cancel')}</Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (isEditing ? <Edit3 className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />)}
-                {isEditing ? "Save Changes" : "Add Driver"}
+                {isEditing ? t('saveChanges') : t('addNewDriver')}
               </Button>
             </DialogFooter>
           </form>

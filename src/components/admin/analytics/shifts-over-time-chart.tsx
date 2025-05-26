@@ -11,23 +11,26 @@ import { db } from "@/lib/firebase";
 import type { Shift } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { useTranslation } from "@/hooks/useTranslation"; // Added
 
 interface ChartData {
   date: string; // YYYY-MM-DD
   shifts: number;
 }
 
-const chartConfig = {
-  shifts: {
-    label: "Shifts",
-    color: "hsl(var(--chart-3))",
-  },
-} satisfies ChartConfig;
 
 export default function ShiftsOverTimeChart() {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useTranslation(); // Added
+
+  const chartConfig = { // Moved inside component to use t()
+    shifts: {
+      label: t('shiftsLabel'),
+      color: "hsl(var(--chart-3))",
+    },
+  } satisfies ChartConfig;
 
   useEffect(() => {
     setIsLoading(true);
@@ -53,7 +56,7 @@ export default function ShiftsOverTimeChart() {
             format(shift.startTime.toDate(), "yyyy-MM-dd") === dateString
           ).length;
           return {
-            date: format(date, "MMM d"), // Format for X-axis display
+            date: format(date, "MMM d"), 
             shifts: shiftsOnDate,
           };
         });
@@ -61,14 +64,14 @@ export default function ShiftsOverTimeChart() {
         setChartData(data);
       } catch (error) {
         console.error("Error fetching chart data:", error);
-        toast({ variant: "destructive", title: "Error", description: "Could not load shifts over time data." });
+        toast({ variant: "destructive", title: t('error'), description: "Could not load shifts over time data." });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [toast]);
+  }, [toast, t]); // Added t to dependencies
 
   if (isLoading) {
     return (
@@ -79,7 +82,7 @@ export default function ShiftsOverTimeChart() {
   }
 
   if (chartData.length === 0) {
-    return <p className="text-center text-muted-foreground py-10 h-72">No recent shift data to display.</p>;
+    return <p className="text-center text-muted-foreground py-10 h-72">{t('noRecentShiftDataForChart')}</p>;
   }
   
 
