@@ -10,7 +10,7 @@ import { db } from "@/lib/firebase";
 import type { Shift, Taxi } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
-import { useTranslation } from "@/hooks/useTranslation"; // Added
+import { useTranslation } from "@/hooks/useTranslation"; 
 
 
 interface ChartData {
@@ -24,9 +24,9 @@ export default function TaxiUtilizationChart() {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { t } = useTranslation(); // Added
+  const { t } = useTranslation(); 
 
-  const chartConfig = { // Moved inside component to use t()
+  const chartConfig = { 
     hours: {
       label: t('hoursBookedLabel'),
       color: "hsl(var(--chart-2))",
@@ -58,14 +58,14 @@ export default function TaxiUtilizationChart() {
         setChartData(data);
       } catch (error) {
         console.error("Error fetching chart data:", error);
-        toast({ variant: "destructive", title: t('error'), description: "Could not load taxi utilization data." });
+        toast({ variant: "destructive", title: t('error'), description: t("Could not load taxi utilization data." as any) }); // Cast if key is not in default
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [toast, t]); // Added t to dependencies
+  }, [toast, t]); 
 
   if (isLoading) {
     return (
@@ -90,9 +90,10 @@ export default function TaxiUtilizationChart() {
           <YAxis dataKey="hours" />
           <ChartTooltipContent />
           <Legend />
-          <Bar dataKey="hours" radius={4} />
+          <Bar dataKey="hours" name={chartConfig.hours.label as string} radius={4} />
         </RechartsBarChart>
       </ChartContainer>
     </div>
   );
 }
+

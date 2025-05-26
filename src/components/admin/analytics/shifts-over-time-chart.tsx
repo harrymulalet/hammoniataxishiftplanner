@@ -11,10 +11,10 @@ import { db } from "@/lib/firebase";
 import type { Shift } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
-import { useTranslation } from "@/hooks/useTranslation"; // Added
+import { useTranslation } from "@/hooks/useTranslation"; 
 
 interface ChartData {
-  date: string; // YYYY-MM-DD
+  date: string; 
   shifts: number;
 }
 
@@ -23,9 +23,9 @@ export default function ShiftsOverTimeChart() {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { t } = useTranslation(); // Added
+  const { t } = useTranslation(); 
 
-  const chartConfig = { // Moved inside component to use t()
+  const chartConfig = { 
     shifts: {
       label: t('shiftsLabel'),
       color: "hsl(var(--chart-3))",
@@ -64,14 +64,14 @@ export default function ShiftsOverTimeChart() {
         setChartData(data);
       } catch (error) {
         console.error("Error fetching chart data:", error);
-        toast({ variant: "destructive", title: t('error'), description: "Could not load shifts over time data." });
+        toast({ variant: "destructive", title: t('error'), description: t("Could not load shifts over time data." as any) }); // Cast if key not in default
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [toast, t]); // Added t to dependencies
+  }, [toast, t]); 
 
   if (isLoading) {
     return (
@@ -101,9 +101,10 @@ export default function ShiftsOverTimeChart() {
           <YAxis dataKey="shifts" allowDecimals={false} />
           <ChartTooltipContent />
           <Legend />
-          <Line type="monotone" dataKey="shifts" stroke={chartConfig.shifts.color} strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="shifts" name={chartConfig.shifts.label as string} stroke={chartConfig.shifts.color} strokeWidth={2} dot={false} />
         </RechartsLineChart>
       </ChartContainer>
     </div>
   );
 }
+

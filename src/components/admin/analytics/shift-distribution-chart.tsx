@@ -10,7 +10,7 @@ import { db } from "@/lib/firebase";
 import type { Shift, UserProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
-import { useTranslation } from "@/hooks/useTranslation"; // Added
+import { useTranslation } from "@/hooks/useTranslation"; 
 
 interface ChartData {
   driverName: string;
@@ -23,9 +23,9 @@ export default function ShiftDistributionChart() {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { t } = useTranslation(); // Added
+  const { t } = useTranslation(); 
 
-  const chartConfig = { // Moved inside component to use t()
+  const chartConfig = { 
     shifts: {
       label: t('shiftsBookedLabel'),
       color: "hsl(var(--chart-1))",
@@ -54,14 +54,14 @@ export default function ShiftDistributionChart() {
         setChartData(data);
       } catch (error) {
         console.error("Error fetching chart data:", error);
-        toast({ variant: "destructive", title: t('error'), description: "Could not load shift distribution data." });
+        toast({ variant: "destructive", title: t('error'), description: t("Could not load shift distribution data." as any) }); // Cast if key is not in default
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [toast, t]); // Added t to dependencies
+  }, [toast, t]); 
 
   if (isLoading) {
     return (
@@ -94,9 +94,10 @@ export default function ShiftDistributionChart() {
             />
           <ChartTooltipContent />
           <Legend />
-          <Bar dataKey="shifts" radius={4} />
+          <Bar dataKey="shifts" name={chartConfig.shifts.label as string} radius={4} />
         </RechartsBarChart>
       </ChartContainer>
     </div>
   );
 }
+
