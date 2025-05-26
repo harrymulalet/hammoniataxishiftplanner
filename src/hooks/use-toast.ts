@@ -1,3 +1,4 @@
+
 "use client"
 
 // Inspired by react-hot-toast library
@@ -8,14 +9,15 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_LIMIT = 3 // Increased limit slightly
+const TOAST_REMOVE_DELAY = 5000 // Default 5 seconds, can be overridden by duration prop in toast call
 
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  duration?: number // Added duration
 }
 
 const actionTypes = {
@@ -58,9 +60,9 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
-const addToRemoveQueue = (toastId: string) => {
+const addToRemoveQueue = (toastId: string, duration: number = TOAST_REMOVE_DELAY) => {
   if (toastTimeouts.has(toastId)) {
-    return
+    clearTimeout(toastTimeouts.get(toastId)) // Clear existing timeout if any
   }
 
   const timeout = setTimeout(() => {
@@ -69,7 +71,7 @@ const addToRemoveQueue = (toastId: string) => {
       type: "REMOVE_TOAST",
       toastId: toastId,
     })
-  }, TOAST_REMOVE_DELAY)
+  }, duration)
 
   toastTimeouts.set(toastId, timeout)
 }
@@ -77,6 +79,13 @@ const addToRemoveQueue = (toastId: string) => {
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
+      // If duration is provided for the new toast, use it for auto-dismiss
+      if (action.toast.open && action.toast.duration) {
+        addToRemoveQueue(action.toast.id, action.toast.duration);
+      } else if (action.toast.open) {
+        // Default duration if not specified but toast is open
+        addToRemoveQueue(action.toast.id);
+      }
       return {
         ...state,
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
@@ -93,13 +102,16 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
-        addToRemoveQueue(toastId)
+        const toastToDismiss = state.toasts.find(t => t.id === toastId);
+        if (toastToDismiss) {
+          addToRemoveQueue(toastId, toastToDismiss.duration || TOAST_REMOVE_DELAY);
+        }
       } else {
         state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
+           if (toast.open) { // Only add to remove queue if it's currently open
+            addToRemoveQueue(toast.id, toast.duration || TOAST_REMOVE_DELAY);
+          }
         })
       }
 
@@ -117,10 +129,18 @@ export const reducer = (state: State, action: Action): State => {
     }
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
+        // Clear all timeouts when removing all toasts
+        toastTimeouts.forEach(timeout => clearTimeout(timeout));
+        toastTimeouts.clear();
         return {
           ...state,
           toasts: [],
         }
+      }
+      // Clear specific timeout
+      if (toastTimeouts.has(action.toastId)) {
+        clearTimeout(toastTimeouts.get(action.toastId));
+        toastTimeouts.delete(action.toastId);
       }
       return {
         ...state,
@@ -159,7 +179,14 @@ function toast({ ...props }: Toast) {
       id,
       open: true,
       onOpenChange: (open) => {
-        if (!open) dismiss()
+        if (!open) {
+          // When programmatically closed (e.g., by swipe or close button),
+          // ensure it's added to the remove queue to clean up from state.
+          addToRemoveQueue(id, props.duration || TOAST_REMOVE_DELAY);
+          // We also need to update its open state in memoryState immediately
+          // so it visually disappears. The REMOVE_TOAST action will later remove it from the array.
+           dispatch({ type: "UPDATE_TOAST", toast: { id, open: false } });
+        }
       },
     },
   })
@@ -192,3 +219,6 @@ function useToast() {
 }
 
 export { useToast, toast }
+
+
+    

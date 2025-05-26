@@ -18,11 +18,14 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import SiteLogo from './SiteLogo';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { AdminSidebarContent } from '@/components/admin/admin-sidebar'; // Assuming this will contain nav links
+import { AdminSidebarContent } from '@/components/admin/admin-sidebar';
 import { cn } from '@/lib/utils';
+import LanguageSwitcher from './LanguageSwitcher'; // Added
+import { useTranslation } from '@/hooks/useTranslation'; // Added
 
 export function Navbar() {
   const { userProfile, logout, isAdmin, loading } = useAuth();
+  const { t } = useTranslation(); // Added
   const pathname = usePathname();
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -55,16 +58,14 @@ export function Navbar() {
           {isAdmin && (
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
+                <Button variant="ghost" size="icon" className="md:hidden" aria-label={t('toggleNavigation')}>
                   <Menu className="h-6 w-6" />
-                  <span className="sr-only">Toggle Navigation</span>
+                  <span className="sr-only">{t('toggleNavigation')}</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 pt-8 w-72 bg-sidebar text-sidebar-foreground">
-                 {/* AdminSidebarContent needs to be created and accept a callback to close sheet on nav */}
                 <AdminSidebarContent onLinkClick={() => {
-                  // Close sheet logic here if Sheet component doesn't auto-close
-                  // For now, assume SheetTrigger manages its state or find a way to close it
+                  // Sheet should close on navigation if using NextLink within or if Sheet state is managed
                 }} />
               </SheetContent>
             </Sheet>
@@ -74,15 +75,16 @@ export function Navbar() {
           </Link>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <LanguageSwitcher /> {/* Added */}
           {userProfile && (
             <span className="text-sm text-muted-foreground hidden sm:inline">
-              {userProfile.firstName} {userProfile.lastName} ({userProfile.role})
+              {userProfile.firstName} {userProfile.lastName} ({t(userProfile.role as 'admin' | 'driver')})
             </span>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              <Button variant="ghost" className="relative h-10 w-10 rounded-full" aria-label={t('userProfile')}>
                 <Avatar className="h-9 w-9">
                   <AvatarImage 
                     src={userProfile?.uid /* Placeholder for actual avatar image URL if available */} 
@@ -107,16 +109,9 @@ export function Navbar() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {/* Add profile/settings link if needed */}
-              {/* <DropdownMenuItem asChild>
-                <Link href="/profile">
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  Profile
-                </Link>
-              </DropdownMenuItem> */}
               <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
+                <span>{t('logout')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -125,3 +120,5 @@ export function Navbar() {
     </header>
   );
 }
+
+    

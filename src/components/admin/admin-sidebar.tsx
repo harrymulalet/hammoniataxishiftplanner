@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Users, Car, CalendarDays, BarChart2, Settings, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Users, Car, CalendarDays, BarChart2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import {
@@ -18,23 +18,25 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import SiteLogo from '../shared/SiteLogo';
+import { useTranslation } from '@/hooks/useTranslation'; // Added
+import type { TranslationKey } from '@/lib/translations'; // Added
 
 export interface AdminSidebarProps {
   className?: string;
-  onLinkClick?: () => void; // For mobile sheet closing
+  onLinkClick?: () => void; 
 }
 
-const navItems = [
-  { href: '/admin/drivers', label: 'Drivers', icon: Users },
-  { href: '/admin/taxis', label: 'Taxis', icon: Car },
-  { href: '/admin/shifts', label: 'All Shifts', icon: CalendarDays },
-  { href: '/admin/analytics', label: 'Analytics', icon: BarChart2 },
-  // { href: '/admin/settings', label: 'Settings', icon: Settings }, // Example for future use
+const navItemsConfig: { href: string; labelKey: TranslationKey; icon: React.ElementType }[] = [ // Changed label to labelKey
+  { href: '/admin/drivers', labelKey: 'adminDrivers', icon: Users },
+  { href: '/admin/taxis', labelKey: 'adminTaxis', icon: Car },
+  { href: '/admin/shifts', labelKey: 'adminAllShifts', icon: CalendarDays },
+  { href: '/admin/analytics', labelKey: 'adminAnalytics', icon: BarChart2 },
 ];
 
 export function AdminSidebarContent({ onLinkClick }: AdminSidebarProps) {
   const pathname = usePathname();
   const { state } = useSidebar();
+  const { t } = useTranslation(); // Added
 
   return (
     <>
@@ -43,20 +45,20 @@ export function AdminSidebarContent({ onLinkClick }: AdminSidebarProps) {
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
-          {navItems.map((item) => (
+          {navItemsConfig.map((item) => (
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   asChild
                   isActive={pathname.startsWith(item.href)}
-                  tooltip={state === "collapsed" ? item.label : undefined}
+                  tooltip={state === "collapsed" ? t(item.labelKey) : undefined}
                   onClick={onLinkClick}
                   className="justify-start"
                 >
                   <a>
                     <item.icon className="h-5 w-5 shrink-0" />
                     <span className={cn("truncate", state === "collapsed" && "sr-only")}>
-                      {item.label}
+                      {t(item.labelKey)} {/* Use t() here */}
                     </span>
                   </a>
                 </SidebarMenuButton>
@@ -82,3 +84,5 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
     </Sidebar>
   );
 }
+
+    

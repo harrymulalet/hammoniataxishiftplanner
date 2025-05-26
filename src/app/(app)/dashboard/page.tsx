@@ -4,27 +4,30 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import AvailableTaxisList from '@/components/driver/available-taxis-list';
 import MyShiftsTable from '@/components/driver/my-shifts-table';
 import TaxiBookingModal from '@/components/driver/taxi-booking-modal';
+import { useTranslation } from '@/hooks/useTranslation'; // Added
+import { Loader2 } from 'lucide-react'; // Added
 
 
 export default function DriverDashboardPage() {
   const { userProfile, isDriver, loading } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation(); // Added
 
   useEffect(() => {
     if (!loading && !isDriver) {
-      // If not a driver or loading, redirect or show error
-      // This could be a redirect to login or an unauthorized page
       router.replace('/'); 
     }
   }, [loading, isDriver, router]);
 
-  if (loading || !isDriver) {
-    return <div className="flex h-screen items-center justify-center"><p>Loading driver dashboard...</p></div>;
+  if (loading || !isDriver || !userProfile) { // Added !userProfile check
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" /> {/* Use Loader2 */}
+      </div>
+    );
   }
 
   return (
@@ -32,10 +35,10 @@ export default function DriverDashboardPage() {
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Driver Dashboard
+            {t('driverDashboardTitle')}
           </h1>
           <p className="text-muted-foreground">
-            Welcome, {userProfile?.firstName}! Manage your shifts and bookings here.
+            {t('driverDashboardWelcome', { firstName: userProfile.firstName })}
           </p>
         </div>
         <TaxiBookingModal />
@@ -45,8 +48,8 @@ export default function DriverDashboardPage() {
         <div className="lg:col-span-2">
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>My Upcoming Shifts</CardTitle>
-              <CardDescription>View and manage your scheduled shifts.</CardDescription>
+              <CardTitle>{t('myUpcomingShifts')}</CardTitle>
+              <CardDescription>{t('viewManageShifts')}</CardDescription>
             </CardHeader>
             <CardContent>
               <MyShiftsTable />
@@ -57,8 +60,8 @@ export default function DriverDashboardPage() {
         <div>
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Available Taxis</CardTitle>
-              <CardDescription>Taxis currently available for booking.</CardDescription>
+              <CardTitle>{t('availableTaxis')}</CardTitle>
+              <CardDescription>{t('taxisCurrentlyAvailable')}</CardDescription>
             </CardHeader>
             <CardContent>
               <AvailableTaxisList />
@@ -69,3 +72,5 @@ export default function DriverDashboardPage() {
     </div>
   );
 }
+
+    

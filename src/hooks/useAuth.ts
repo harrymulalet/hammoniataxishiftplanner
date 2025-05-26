@@ -1,4 +1,5 @@
-import { useContext } from 'react';
+
+import { useContext, useCallback } from 'react'; // Added useCallback
 import { AuthContext, type AuthContextType } from '@/components/auth/auth-provider';
 
 export const useAuth = (): AuthContextType => {
@@ -8,3 +9,5 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
+    

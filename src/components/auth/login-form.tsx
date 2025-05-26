@@ -22,9 +22,10 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation'; // Added
 
 const loginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address." }),
+  email: z.string().email({ message: "Invalid email address." }), // Validation messages could also be translated
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
@@ -35,7 +36,8 @@ export function LoginForm() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { role } = useAuth(); // To get role after login attempt for redirection
+  const { role } = useAuth(); 
+  const { t } = useTranslation(); // Added
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -49,20 +51,16 @@ export function LoginForm() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      // AuthProvider will handle fetching role and profile
-      // Redirection will be handled by root page.tsx or AuthProvider effect
       toast({
-        title: "Login Successful",
-        description: "Welcome back to ShiftCycle!",
+        title: t('loginSuccessful'),
+        description: t('welcomeBack'),
       });
-       // The redirection is now handled by the root page.tsx and AuthProvider effect.
-       // Forcing a navigation event might help trigger it if necessary.
       router.push('/'); 
     } catch (error: any) {
       console.error("Login error:", error);
       toast({
         variant: "destructive",
-        title: "Login Failed",
+        title: t('loginFailed'),
         description: error.message || "An unexpected error occurred. Please try again.",
       });
     } finally {
@@ -78,11 +76,11 @@ export function LoginForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email Address</FormLabel>
+              <FormLabel>{t('emailAddressLabel')}</FormLabel>
               <FormControl>
                 <Input
                   type="email"
-                  placeholder="your.email@example.com"
+                  placeholder={t('emailPlaceholder')}
                   {...field}
                   className="text-base"
                 />
@@ -96,12 +94,12 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>{t('passwordLabel')}</FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder={t('passwordPlaceholder')}
                     {...field}
                     className="text-base pr-10"
                   />
@@ -111,6 +109,7 @@ export function LoginForm() {
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? t('hidePassword') : t('showPassword')}
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -118,7 +117,7 @@ export function LoginForm() {
                       <Eye className="h-4 w-4" aria-hidden="true" />
                     )}
                     <span className="sr-only">
-                      {showPassword ? "Hide password" : "Show password"}
+                      {showPassword ? t('hidePassword') : t('showPassword')}
                     </span>
                   </Button>
                 </div>
@@ -131,19 +130,20 @@ export function LoginForm() {
           {isLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            "Sign In"
+            t('signInButton')
           )}
         </Button>
          <div className="text-sm text-center">
           <a href="#" className="font-medium text-primary hover:text-primary/80" onClick={(e) => {
             e.preventDefault();
-            toast({ title: "Forgot Password", description: "Password reset functionality would be here."});
-            // Implement password reset logic if needed, e.g., using auth.sendPasswordResetEmail
+            toast({ title: t('forgotPasswordToastTitle'), description: t('forgotPasswordToastDesc')});
           }}>
-            Forgot your password?
+            {t('forgotPasswordLink')}
           </a>
         </div>
       </form>
     </Form>
   );
 }
+
+    
