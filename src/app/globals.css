@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 220 17% 95%; /* #F0F2F5 */
+    --foreground: 210 10% 23%; /* Darker Gray for better contrast on light bg */
+
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 210 10% 23%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 10% 23%;
+
+    --primary: 231 48% 48%; /* #3F51B5 */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
+
+    --secondary: 231 40% 60%; /* Lighter blue for secondary elements */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 15% 88%; /* Lighter grey for muted backgrounds */
+    --muted-foreground: 220 7% 45%; /* Darker grey for text on muted */
+
+    --accent: 260 38% 55%; /* #7E57C2 */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 13% 85%; /* #D1D5DB, slightly darker for better visibility */
+    --input: 220 13% 90%; /* Input background, slightly off-white */
+    --ring: 231 48% 48%; /* Primary color for focus rings */
+
+    --radius: 0.5rem;
+
+    /* Chart colors (Material Design palette inspired) */
+    --chart-1: 206 70% 50%; /* Blue 500 */
+    --chart-2: 0 70% 60%; /* Red 500 */
+    --chart-3: 39 90% 55%; /* Amber 500 */
+    --chart-4: 130 50% 50%; /* Green 500 */
+    --chart-5: 280 55% 60%; /* Purple 400 (overlaps with accent, adjust if needed) */
+    
+    --sidebar-background: 220 17% 98%; /* Even lighter grey or white for sidebar */
+    --sidebar-foreground: 231 48% 28%; /* Darker primary for text */
+    --sidebar-primary: 231 48% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 231 48% 90%; /* Light primary for hover/active */
+    --sidebar-accent-foreground: 231 48% 30%; /* Dark primary for text on accent */
+    --sidebar-border: 220 13% 85%;
+    --sidebar-ring: 231 48% 48%;
+  }
+
+  .dark {
+    --background: 220 10% 10%; /* Dark Grey #1A1C1E */
+    --foreground: 0 0% 90%; /* Light Grey #E6E6E6 */
+
+    --card: 220 10% 15%; /* #222528 */
+    --card-foreground: 0 0% 90%;
+
+    --popover: 220 10% 15%;
+    --popover-foreground: 0 0% 90%;
+
+    --primary: 231 48% 66%; /* Light Indigo #7986CB */
+    --primary-foreground: 0 0% 10%; /* Dark text on light primary */
+
+    --secondary: 231 40% 50%; /* Slightly darker light blue */
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 220 8% 20%; /* Darker muted background */
+    --muted-foreground: 220 5% 60%; /* Lighter muted text */
+
+    --accent: 260 48% 73%; /* Light Purple #B39DDB */
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 70% 50%; /* Softer red for dark mode */
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 10% 25%; /* #363A3D */
+    --input: 220 10% 22%; /* Darker input background */
+    --ring: 231 48% 66%; /* Light primary for focus rings */
+
+    /* Chart colors for dark theme (adjust lightness) */
+    --chart-1: 206 70% 60%; 
+    --chart-2: 0 70% 70%; 
+    --chart-3: 39 90% 65%; 
+    --chart-4: 130 50% 60%; 
+    --chart-5: 280 55% 70%;
+
+    --sidebar-background: 220 10% 12%; /* Darker sidebar */
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 231 48% 66%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 231 48% 25%; /* Darker accent for hover/active */
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 220 10% 25%;
+    --sidebar-ring: 231 48% 66%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

@@ -1,0 +1,75 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Helper function to check if user is driver
+    function isDriver() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver';
+    }
+    
+    // User profiles
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow create: if isAdmin(); // Only admins can create user profiles (usually linked with Auth creation)
+      allow update: if request.auth != null && (isAdmin() || (isDriver() && request.auth.uid == userId && request.resource.data.keys().hasOnly(['firstName', 'lastName']))); // Drivers can only update their own name
+      allow delete: if isAdmin(); // Only admins can delete user profiles
+    }
+
+    // Taxis
+    match /taxis/{taxiId} {
+      allow read: if request.auth != null; // All authenticated users can read taxis
+      allow create, update, delete: if isAdmin(); // Only admins can manage taxis
+    }
+
+    // Shifts
+    match /shifts/{shiftId} {
+      allow read: if request.auth != null; // All authenticated users can read shifts (for conflict checking on client)
+      
+      allow create: if request.auth != null && 
+                      (
+                        (isDriver() && request.resource.data.driverId == request.auth.uid) || 
+                        isAdmin()
+                      ) &&
+                      // Basic data integrity checks
+                      request.resource.data.startTime < request.resource.data.endTime &&
+                      // Max 10 hours (10 * 60 * 60 * 1000 = 36000000 ms)
+                      request.resource.data.endTime.toMillis() - request.resource.data.startTime.toMillis() <= 36000000 &&
+                      // Ensure taxiId is valid (exists in taxis collection) - this is a best-effort, can be costly
+                      // get(/databases/$(database)/documents/taxis/$(request.resource.data.taxiId)).data.isActive == true 
+                      // --> For simplicity and performance on free tier, client-side should ensure this.
+                      // --> A more robust check would require a function or specific data structure.
+                      // --> For now, we trust client to send valid taxiId, admin can always fix.
+                      // Ensure driverId exists in users (driver must be valid)
+                      // exists(/databases/$(database)/documents/users/$(request.resource.data.driverId))
+                      // --> Again, for simplicity, client ensures this. Admin can override.
+                      true; // Placeholder for more complex conflict rules if possible
+
+      allow update: if request.auth != null &&
+                      (
+                        (isDriver() && request.resource.data.driverId == request.auth.uid && get(/databases/$(database)/documents/shifts/$(shiftId)).data.driverId == request.auth.uid) || 
+                        isAdmin()
+                      ) &&
+                      request.resource.data.startTime < request.resource.data.endTime &&
+                      request.resource.data.endTime.toMillis() - request.resource.data.startTime.toMillis() <= 36000000;
+                      // Note: Updating a shift to cause a conflict is not prevented by simple rules here.
+
+      allow delete: if request.auth != null &&
+                      (
+                        (isDriver() && get(/databases/$(database)/documents/shifts/$(shiftId)).data.driverId == request.auth.uid) ||
+                        isAdmin()
+                      );
+      
+      // Complex conflict prevention (e.g. ensuring no overlapping bookings for the same taxi)
+      // is very difficult to implement robustly in Firestore rules without Cloud Functions,
+      // especially for time ranges. Client-side validation should be strong.
+      // Rules here focus on basic data integrity and user ownership/admin override.
+    }
+  }
+}
