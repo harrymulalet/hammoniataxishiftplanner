@@ -74,7 +74,7 @@ export const uiStrings = {
   errorBookingShift: "Could not book shift(s). Please check for conflicts or try again.",
   bookingConflictTitle: "Booking Conflict",
   bookingConflictDescription: "Taxi is already booked for {date} between {startTime} and {endTime}. Please choose a different time or taxi.",
-  endTimeAfterStartTime: "End time must be after start time. For overnight shifts, ensure the end time is logically after the start (e.g., 22:00 to 02:00 of next day).",
+  endTimeAfterStartTime: "End time must be after start time. For overnight shifts, ensure the end time (e.g., 02:00) is logically after the start (e.g., 22:00 of the previous day).",
   shiftDurationMax10Hours: "Shift duration cannot exceed 10 hours.",
   userNotFound: "User not found.",
   // Admin General
@@ -285,7 +285,7 @@ export const translations: Record<Locale, typeof uiStrings> = {
     errorBookingShift: "Schicht(en) konnten nicht gebucht werden. Bitte auf Konflikte prüfen oder erneut versuchen.",
     bookingConflictTitle: "Buchungskonflikt",
     bookingConflictDescription: "Das Taxi ist bereits für den {date} zwischen {startTime} und {endTime} gebucht. Bitte eine andere Zeit oder ein anderes Taxi wählen.",
-    endTimeAfterStartTime: "Die Endzeit muss nach der Startzeit liegen. Bei Nachtschichten sicherstellen, dass die Endzeit logisch nach dem Start liegt (z.B. 22:00 bis 02:00 des nächsten Tages).",
+    endTimeAfterStartTime: "Die Endzeit muss nach der Startzeit liegen. Bei Nachtschichten sicherstellen, dass die Endzeit (z.B. 02:00) logisch nach dem Start (z.B. 22:00 des Vortages) liegt.",
     shiftDurationMax10Hours: "Die Schichtdauer darf 10 Stunden nicht überschreiten.",
     userNotFound: "Benutzer nicht gefunden.",
     admin: "Admin",
@@ -422,3 +422,6 @@ export const translations: Record<Locale, typeof uiStrings> = {
     shiftConflictDriverDescription: "Der ausgewählte Fahrer ({driverName}) ist bereits für eine andere Schicht zwischen {startTime} und {endTime} am {date} gebucht.",
   },
 };
+
+
+    
