@@ -142,6 +142,8 @@ export const uiStrings = {
   activated: "activated",
   deactivated: "deactivated",
   errorUpdatingTaxiStatus: "Could not update taxi status.",
+  updatingShiftsWithNewPlate: "Updating associated shifts with new license plate...",
+  shiftsUpdatedWithNewPlate: "License plate updated in associated shifts.",
   // Admin Taxi Form Modal
   addTaxiModalTitle: "Add New Taxi",
   addTaxiModalDescription: "Enter the license plate for the new taxi.",
@@ -323,6 +325,8 @@ export const translations: Record<Locale, typeof uiStrings> = {
     activated: "aktiviert",
     deactivated: "deaktiviert",
     errorUpdatingTaxiStatus: "Taxistatus konnte nicht aktualisiert werden.",
+    updatingShiftsWithNewPlate: "Zugehörige Schichten werden mit neuem Kennzeichen aktualisiert...",
+    shiftsUpdatedWithNewPlate: "Kennzeichen in zugehörigen Schichten aktualisiert.",
     addTaxiModalTitle: "Neues Taxi hinzufügen",
     addTaxiModalDescription: "Geben Sie das Kennzeichen für das neue Taxi ein.",
     editTaxiModalTitle: "Taxi bearbeiten",

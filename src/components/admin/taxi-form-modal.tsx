@@ -2,7 +2,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { doc, setDoc, serverTimestamp, updateDoc, Timestamp, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp, updateDoc, Timestamp, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { Loader2, Car, Edit3 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -103,22 +103,46 @@ export default function AddTaxiModal({ isOpen: controlledIsOpen, setIsOpen: setC
 
       if (isEditing && taxiToEdit) {
         const taxiRef = doc(db, "taxis", taxiToEdit.id); 
+        const oldLicensePlate = taxiToEdit.licensePlate;
+        const newLicensePlate = data.licensePlate;
+
         await updateDoc(taxiRef, {
-          licensePlate: data.licensePlate, 
+          licensePlate: newLicensePlate, 
           isActive: data.isActive,
         });
         toast({ title: t('success'), description: t('taxiUpdatedSuccessfully') });
 
-      } else {
-        const taxiRef = doc(db, "taxis", normalizedPlate);
-        const taxiSnap = await getDocs(query(collection(db, "taxis"), where("licensePlate", "==", data.licensePlate)));
-        if (!taxiSnap.empty && taxiSnap.docs.some(d => d.id === normalizedPlate)) {
-          toast({ variant: "destructive", title: t('error'), description: t('taxiExistsError') });
-          setIsLoading(false);
-          return;
+        if (oldLicensePlate !== newLicensePlate) {
+          toast({ title: t('updatingShifts'), description: t('updatingShiftsWithNewPlate') });
+          const shiftsQuery = query(collection(db, "shifts"), where("taxiId", "==", taxiToEdit.id));
+          const shiftsSnapshot = await getDocs(shiftsQuery);
+          
+          if (!shiftsSnapshot.empty) {
+            const batch = writeBatch(db);
+            shiftsSnapshot.forEach(shiftDoc => {
+              batch.update(shiftDoc.ref, { 
+                taxiLicensePlate: newLicensePlate
+              });
+            });
+            await batch.commit();
+            toast({ title: t('shiftsUpdated'), description: t('shiftsUpdatedWithNewPlate') });
+          }
         }
 
+      } else {
+        // Check if a taxi with the new license plate already exists (using normalized ID for this check)
+        const existingTaxiRef = doc(db, "taxis", normalizedPlate);
+        const existingTaxiSnap = await getDocs(query(collection(db, "taxis"), where("licensePlate", "==", data.licensePlate)));
+
+        if (!existingTaxiSnap.empty && existingTaxiSnap.docs.some(d => d.id === normalizedPlate)) {
+            toast({ variant: "destructive", title: t('error'), description: t('taxiExistsError') });
+            setIsLoading(false);
+            return;
+        }
+        
+        // If creating a new taxi, the ID is the normalized plate
         await setDoc(doc(db, "taxis", normalizedPlate), {
+          id: normalizedPlate, // Store normalized plate also as an 'id' field for consistency if needed elsewhere
           licensePlate: data.licensePlate,
           isActive: data.isActive,
           createdAt: serverTimestamp() as Timestamp,
@@ -207,3 +231,4 @@ export default function AddTaxiModal({ isOpen: controlledIsOpen, setIsOpen: setC
     </Dialog>
   );
 }
+
