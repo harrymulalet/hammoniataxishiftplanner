@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning><body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en"><body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {/* Default lang, will be updated by LanguageProvider */}
         <LanguageProvider> {/* Added */}
           <AuthProvider>
