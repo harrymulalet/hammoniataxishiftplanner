@@ -1,0 +1,84 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if a user is an admin
+    function isAdmin(userId) {
+      // Ensure the user document exists and the role is 'admin'
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.role == 'admin';
+    }
+
+    // User profiles
+    match /users/{userId} {
+      // Admins can create any user profile (e.g., drivers).
+      // Authenticated users can create their own profile document (e.g., initial setup if not done by admin).
+      // Important: Ensure the data being written is validated (e.g., role is 'driver' if admin creates).
+      allow create: if request.auth != null &&
+                       (isAdmin(request.auth.uid) || request.auth.uid == userId);
+
+      // Users can read their own profile. Admins can read any profile.
+      allow read: if request.auth != null &&
+                     (request.auth.uid == userId || isAdmin(request.auth.uid));
+
+      // Users can update their own profile. Admins can update any profile.
+      // Prevent users from changing their own role or email.
+      allow update: if request.auth != null &&
+                       (
+                         (request.auth.uid == userId &&
+                           !(request.resource.data.role != resource.data.role) && // Role cannot be changed by self
+                           !(request.resource.data.email != resource.data.email)   // Email cannot be changed by self
+                         ) ||
+                         isAdmin(request.auth.uid)
+                       );
+
+      // Only admins can delete user profiles from Firestore.
+      // Note: This does not delete the Firebase Auth user.
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    // Taxis
+    match /taxis/{taxiId} {
+      // Admins can create, read, update, delete taxis.
+      allow write: if request.auth != null && isAdmin(request.auth.uid);
+
+      // Any authenticated user can read/list taxis (drivers need this to see available taxis).
+      // Consider if only active taxis should be listable/gettable by non-admins.
+      // For listing active taxis by drivers:
+      // allow list: if request.auth != null && request.query.filters.find(f => f.fieldPath == 'isActive' && f.value == true) != null;
+      // allow get: if request.auth != null && resource.data.isActive == true;
+      // Simpler rule for now:
+      allow read: if request.auth != null;
+    }
+
+    // Shifts
+    match /shifts/{shiftId} {
+      // Drivers can create shifts for themselves.
+      // Admins can also create shifts (e.g., assigning or correcting).
+      // Ensure that driverId in the new shift document matches the authenticated user or user is admin.
+      allow create: if request.auth != null &&
+                       (
+                         (request.resource.data.driverId == request.auth.uid &&
+                           // Basic validation: Ensure startTime and endTime are present and are timestamps
+                           request.resource.data.startTime is timestamp &&
+                           request.resource.data.endTime is timestamp &&
+                           request.resource.data.startTime < request.resource.data.endTime
+                         ) ||
+                         isAdmin(request.auth.uid)
+                       );
+
+      // Drivers can read their own shifts. Admins can read all shifts.
+      allow read: if request.auth != null &&
+                     (get(/databases/$(database)/documents/shifts/$(shiftId)).data.driverId == request.auth.uid || isAdmin(request.auth.uid));
+
+
+      // Drivers can update/delete their own shifts. Admins can update/delete any shift.
+      // Consider adding time-based restrictions (e.g., cannot modify past shifts).
+      allow update, delete: if request.auth != null &&
+                               (get(/databases/$(database)/documents/shifts/$(shiftId)).data.driverId == request.auth.uid || isAdmin(request.auth.uid));
+    }
+  }
+}
+    

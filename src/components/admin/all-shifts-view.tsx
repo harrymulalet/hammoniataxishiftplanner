@@ -1,7 +1,6 @@
-
 "use client";
 
-import { collection, query, onSnapshot, orderBy, Timestamp, doc, deleteDoc } from "firebase/firestore";
+import { collection, query, onSnapshot, orderBy, Timestamp, doc, deleteDoc, where } from "firebase/firestore";
 import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import { Loader2, Trash2, User, Car, Calendar as CalendarIcon } from "lucide-react";
@@ -42,7 +41,7 @@ export default function AllShiftsView() {
   const [allShifts, setAllShifts] = useState<Shift[]>([]);
   const [drivers, setDrivers] = useState<UserProfile[]>([]);
   const [taxis, setTaxis] = useState<Taxi[]>([]);
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -95,7 +94,7 @@ export default function AllShiftsView() {
       const shiftDate = shift.startTime.toDate();
       const matchesDriver = filterDriverId ? shift.driverId === filterDriverId : true;
       const matchesTaxi = filterTaxiId ? shift.taxiId === filterTaxiId : true;
-      const matchesDate = filterDate ? 
+      const matchesDate = filterDate ?
         shiftDate.getFullYear() === filterDate.getFullYear() &&
         shiftDate.getMonth() === filterDate.getMonth() &&
         shiftDate.getDate() === filterDate.getDate()
@@ -122,7 +121,7 @@ export default function AllShiftsView() {
       </div>
     );
   }
-  
+
   // TODO: Add assign shift functionality (modal similar to driver booking but admin can pick driver)
 
   return (
@@ -130,24 +129,24 @@ export default function AllShiftsView() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 border rounded-lg bg-card">
         <div>
           <label htmlFor="driverFilter" className="text-sm font-medium text-muted-foreground block mb-1">Filter by Driver</label>
-          <Select value={filterDriverId} onValueChange={setFilterDriverId}>
+          <Select value={filterDriverId} onValueChange={(value) => setFilterDriverId(value === "all" ? "" : value)}>
             <SelectTrigger id="driverFilter">
               <SelectValue placeholder="All Drivers" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Drivers</SelectItem>
+              <SelectItem value="all">All Drivers</SelectItem>
               {drivers.map(d => <SelectItem key={d.uid} value={d.uid}>{d.firstName} {d.lastName}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div>
           <label htmlFor="taxiFilter" className="text-sm font-medium text-muted-foreground block mb-1">Filter by Taxi</label>
-          <Select value={filterTaxiId} onValueChange={setFilterTaxiId}>
+          <Select value={filterTaxiId} onValueChange={(value) => setFilterTaxiId(value === "all" ? "" : value)}>
             <SelectTrigger id="taxiFilter">
               <SelectValue placeholder="All Taxis" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Taxis</SelectItem>
+              <SelectItem value="all">All Taxis</SelectItem>
               {taxis.map(t => <SelectItem key={t.id} value={t.id}>{t.licensePlate}</SelectItem>)}
             </SelectContent>
           </Select>

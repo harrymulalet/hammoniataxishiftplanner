@@ -1,7 +1,7 @@
 
 "use client";
 
-import { collection, query, onSnapshot, orderBy, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, query, onSnapshot, orderBy, doc, deleteDoc, updateDoc, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Loader2, Edit3, Trash2, UserPlus } from "lucide-react";
 
