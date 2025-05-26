@@ -30,7 +30,7 @@ export const uiStrings = {
   toggleNavigation: "Toggle Navigation",
   userProfile: "User Profile",
   // Login Page
-  loginPageTitle: "Sign in to ShiftCycle",
+  loginPageTitle: "Sign in to Hammonia Taxi Shift",
   loginPageSubtitle: "Manage your taxi shifts efficiently.",
   emailAddressLabel: "Email Address",
   emailPlaceholder: "your.email@example.com",
@@ -202,7 +202,7 @@ export const translations: Record<Locale, typeof uiStrings> = {
     toggleNavigation: "Navigation umschalten",
     userProfile: "Benutzerprofil",
     // Login Page
-    loginPageTitle: "Bei ShiftCycle anmelden",
+    loginPageTitle: "Bei Hammonia Taxi Shift anmelden",
     loginPageSubtitle: "Verwalten Sie Ihre Taxi-Schichten effizient.",
     emailAddressLabel: "E-Mail-Adresse",
     emailPlaceholder: "ihre.email@beispiel.de",
@@ -347,5 +347,7 @@ export const translations: Record<Locale, typeof uiStrings> = {
     employeeTypeOther: "Sonstiges",
   },
 };
+
+    
 
     
