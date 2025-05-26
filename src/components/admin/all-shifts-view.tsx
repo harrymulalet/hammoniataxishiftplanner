@@ -4,7 +4,7 @@
 import { collection, query, onSnapshot, orderBy, Timestamp, doc, deleteDoc, where } from "firebase/firestore";
 import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Loader2, Trash2, User, Car, Calendar as CalendarIcon } from "lucide-react";
+import { Loader2, Trash2, User, Car, Calendar as CalendarIcon, Edit3, PlusCircle } from "lucide-react";
 
 import { db } from "@/lib/firebase";
 import type { Shift, UserProfile, Taxi } from "@/lib/types";
@@ -35,7 +35,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useTranslation } from "@/hooks/useTranslation"; // Added
+import { useTranslation } from "@/hooks/useTranslation";
+import AdminShiftFormModal from "./AdminShiftFormModal";
 
 
 export default function AllShiftsView() {
@@ -46,11 +47,14 @@ export default function AllShiftsView() {
 
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { t } = useTranslation(); // Added
+  const { t } = useTranslation();
 
   const [filterDriverId, setFilterDriverId] = useState<string>("");
   const [filterTaxiId, setFilterTaxiId] = useState<string>("");
   const [filterDate, setFilterDate] = useState<Date | undefined>();
+
+  const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
+  const [shiftToEdit, setShiftToEdit] = useState<Shift | null>(null);
 
   useEffect(() => {
      if (authLoading) {
@@ -113,7 +117,23 @@ export default function AllShiftsView() {
     }
   };
 
-  if (isLoading) {
+  const handleOpenAddShiftModal = () => {
+    setShiftToEdit(null);
+    setIsShiftModalOpen(true);
+  };
+
+  const handleOpenEditShiftModal = (shift: Shift) => {
+    setShiftToEdit(shift);
+    setIsShiftModalOpen(true);
+  };
+  
+  const handleShiftSaved = () => {
+    // Optionally re-fetch or rely on onSnapshot to update data
+    setIsShiftModalOpen(false); 
+  };
+
+
+  if (isLoading && !isShiftModalOpen) { // Avoid loader when modal is open and fetching its own data
     return (
       <div className="flex justify-center items-center py-10">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -124,6 +144,11 @@ export default function AllShiftsView() {
 
   return (
     <div className="space-y-4">
+       <div className="flex justify-end mb-4">
+        <Button onClick={handleOpenAddShiftModal}>
+          <PlusCircle className="mr-2 h-4 w-4" /> {t('adminAddNewShift')}
+        </Button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 border rounded-lg bg-card">
         <div>
           <label htmlFor="driverFilter" className="text-sm font-medium text-muted-foreground block mb-1">{t('filterByDriver')}</label>
@@ -175,7 +200,7 @@ export default function AllShiftsView() {
         </div>
       </div>
 
-      {filteredShifts.length === 0 && (
+      {filteredShifts.length === 0 && !isLoading && (
         <p className="text-center text-muted-foreground py-10">{t('noShiftsMatchFilters')}</p>
       )}
 
@@ -197,8 +222,8 @@ export default function AllShiftsView() {
             {filteredShifts.map((shift) => {
               const startTimeDate = shift.startTime.toDate();
               const endTimeDate = shift.endTime.toDate();
-              const startDateStr = startTimeDate.toDateString();
-              const endDateStr = endTimeDate.toDateString();
+              const startDateStr = format(startTimeDate, "yyyy-MM-dd");
+              const endDateStr = format(endTimeDate, "yyyy-MM-dd");
               
               let endTimeDisplay = format(endTimeDate, "p");
               if (startDateStr !== endDateStr) {
@@ -212,7 +237,10 @@ export default function AllShiftsView() {
                   <TableCell>{format(startTimeDate, "EEE, MMM d, yyyy")}</TableCell>
                   <TableCell>{format(startTimeDate, "p")}</TableCell>
                   <TableCell>{endTimeDisplay}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right space-x-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleOpenEditShiftModal(shift)} aria-label={t('adminEditShift')}>
+                        <Edit3 className="h-4 w-4" />
+                    </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label={t('deleteShiftButton')}>
@@ -250,6 +278,12 @@ export default function AllShiftsView() {
         </Table>
         </div>
       )}
+       <AdminShiftFormModal
+        isOpen={isShiftModalOpen}
+        setIsOpen={setIsShiftModalOpen}
+        shiftToEdit={shiftToEdit}
+        onShiftSaved={handleShiftSaved}
+      />
     </div>
   );
 }
