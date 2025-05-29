@@ -35,45 +35,8 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(firebaseUser);
-        // Fetch user profile from Firestore to get the role
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        try {
-          const userDocSnap = await getDoc(userDocRef);
-          if (userDocSnap.exists()) {
-            const profile = userDocSnap.data() as UserProfile;
-            setUserProfile(profile);
-            setRole(profile.role || null); // Ensure role is null if undefined in profile
-          } else {
-            // No profile found, treat as an error or incomplete signup
-            console.error(`User profile not found in Firestore for UID: ${firebaseUser.uid}. Role will be null.`);
-            setUserProfile(null);
-            setRole(null);
-            // Optionally sign out the user if profile is mandatory
-            // await auth.signOut();
-            // setUser(null); // if signing out
-          }
-        } catch (error) {
-            console.error(`Error fetching user profile for UID ${firebaseUser.uid}:`, error);
-            setUserProfile(null);
-            setRole(null);
-        }
-      } else {
-        setUser(null);
-        setUserProfile(null);
-        setRole(null);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   const logout = async () => {
-    setLoading(true); // Indicate loading during logout process
+    setLoading(true); 
     try {
       await auth.signOut();
     } catch (error) {
@@ -82,19 +45,46 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       setUser(null);
       setUserProfile(null);
       setRole(null);
-      // No need to setLoading(true) then false here, onAuthStateChanged will handle it.
-      // The setLoading(false) in onAuthStateChanged will fire after user becomes null.
-      // Explicitly ensure loading is false after state clear if not relying on onAuthStateChanged immediately.
       setLoading(false); 
-      if (pathname !== '/login') { // Avoid pushing to login if already there or if onAuthStateChanged will handle redirect via page.tsx
-         router.push('/login'); // Redirect to login after logout
+      if (pathname !== '/login') { 
+         router.push('/login'); 
       }
     }
   };
-  
-  // General redirect logic for unauthenticated users was removed from here
-  // as it's better handled by AppLayout and AuthLayout for their specific contexts.
-  // The `page.tsx` also handles the initial routing decision.
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        try {
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const profile = userDocSnap.data() as UserProfile;
+            setUserProfile(profile);
+            setRole(profile.role || null); 
+            setLoading(false);
+          } else {
+            console.error(`User profile not found in Firestore for UID: ${firebaseUser.uid}. Role will be null. Logging out.`);
+            await logout(); // Call logout if profile not found
+            // setLoading(false) will be handled by logout's finally block
+          }
+        } catch (error) {
+            console.error(`Error fetching user profile for UID ${firebaseUser.uid}:`, error);
+            await logout(); // Call logout on error fetching profile
+            // setLoading(false) will be handled by logout's finally block
+        }
+      } else {
+        setUser(null);
+        setUserProfile(null);
+        setRole(null);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // logout function is stable and doesn't need to be in deps
 
   return (
     <AuthContext.Provider
