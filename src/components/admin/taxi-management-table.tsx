@@ -30,7 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
-import AddTaxiModal from "./taxi-form-modal"; 
+import AddTaxiModal from "./taxi-form-modal";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation"; // Added
 
@@ -51,6 +51,7 @@ export default function TaxiManagementTable() {
     }
     if (!adminProfile || adminProfile.role !== 'admin') {
         setIsLoading(false);
+        setTaxis([]); // Clear taxis if not admin
         return;
     }
     setIsLoading(true);
@@ -63,7 +64,7 @@ export default function TaxiManagementTable() {
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching taxis:", error);
-      toast({ variant: "destructive", title: t('error'), description: "Could not load taxi data." });
+      toast({ variant: "destructive", title: t('error'), description: t('errorLoadingTaxisAdmin') });
       setIsLoading(false);
     });
 
@@ -91,7 +92,7 @@ export default function TaxiManagementTable() {
       toast({ variant: "destructive", title: t('error'), description: t('errorUpdatingTaxiStatus') });
     }
   };
-  
+
   const handleEditTaxi = (taxi: Taxi) => {
     setEditingTaxi(taxi);
     setIsEditModalOpen(true);

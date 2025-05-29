@@ -56,15 +56,17 @@ export const uiStrings = {
   bookNewShift: "Book New Shift",
   noShiftsFound: "You have no upcoming or recent shifts.",
   loadingYourShifts: "Loading your shifts...",
+  errorLoadingShifts: "Could not load your shifts.", // Added
   taxi: "Taxi",
   date: "Date",
   startTime: "Start Time",
   endTime: "End Time",
-  deleteShiftConfirmationTitle: "Delete Shift Confirmation",
+  deleteShiftConfirmationTitle: "Delete Shift Confirmation", // This key seems fine, though specific to driver.
   deleteShiftConfirmationMessage: "This action cannot be undone. This will permanently delete the shift for taxi {taxiLicensePlate} on {date} from {startTime} to {endTime}.",
   editShiftToastMessage: "Editing shift for {taxiLicensePlate} on {date}. (Edit functionality not fully implemented in this example)",
   noTaxisActive: "No taxis are currently marked as active.",
-  loadingTaxis: "Loading taxis...",
+  loadingTaxis: "Loading taxis...", // Used for loading state
+  errorLoadingTaxis: "Could not load taxi data.", // Added for errors
   // Taxi Booking Modal
   bookTaxiShiftTitle: "Book a Taxi Shift",
   bookTaxiShiftDescription: "Select a taxi, date(s), and time for your shift. Max 10 hours per shift.",
@@ -92,7 +94,8 @@ export const uiStrings = {
   allDriversDescription: "A list of all registered drivers in the system.",
   addNewDriver: "Add New Driver",
   noDriversFound: "No drivers found.",
-  loadingDrivers: "Loading drivers...",
+  loadingDrivers: "Loading drivers...", // Used in DriverManagementTable
+  errorLoadingDriverData: "Could not load driver data.", // Specific error for DriverManagementTable
   driverName: "Name",
   employeeType: "Employee Type",
   editDriver: "Edit driver",
@@ -130,7 +133,8 @@ export const uiStrings = {
   allTaxisDescription: "A list of all registered taxis in the system.",
   addNewTaxi: "Add New Taxi",
   noTaxisFound: "No taxis found. Add one to get started.",
-  loadingTaxisAdmin: "Loading taxis...",
+  loadingTaxisAdmin: "Loading taxis...", // Used in TaxiManagementTable
+  errorLoadingTaxisAdmin: "Could not load taxi data.", // Specific for TaxiManagementTable
   licensePlate: "License Plate",
   toggleTaxiStatus: "{status} taxi", // e.g. "Activate taxi"
   activateTaxi: "Activate taxi",
@@ -172,7 +176,8 @@ export const uiStrings = {
   filterByTaxi: "Filter by Taxi",
   allTaxisPlaceholder: "All Taxis",
   filterByDate: "Filter by Date",
-  loadingAllShifts: "Loading all shifts...",
+  loadingAllShifts: "Loading all shifts...", // Used in AllShiftsView
+  errorLoadingAllShifts: "Could not load shifts data.", // Specific for AllShiftsView
   noShiftsMatchFilters: "No shifts match your filters, or no shifts found.",
   shiftDeletedSuccessfully: "Shift deleted successfully.",
   errorDeletingShift: "Could not delete shift.",
@@ -190,7 +195,10 @@ export const uiStrings = {
   noShiftDataForChart: "No shift data available to display.",
   noRecentShiftDataForChart: "No recent shift data to display.",
   noTaxiUtilizationData: "No taxi utilization data available.",
-  // Employee Types (from lib/types.ts)
+  errorLoadingShiftDistribution: "Could not load shift distribution data.",
+  errorLoadingTaxiUtilization: "Could not load taxi utilization data.",
+  errorLoadingShiftsOverTime: "Could not load shifts over time data.",
+  // Employee Types (from lib/types.ts) - these are more like data than UI strings but good to have keys if they appear in UI
   employeeTypeFullTime: "Vollzeit Mitarbeiter",
   employeeTypePartTime: "Aushilfe",
   employeeTypeOther: "Sonstiges",
@@ -220,10 +228,10 @@ export const uiStrings = {
 
 export type TranslationKey = keyof typeof uiStrings;
 
-export const translations: Record<Locale, typeof uiStrings> = {
+export const translations: Record<Locale, Partial<typeof uiStrings>> = { // Use Partial for German to avoid listing all keys if some aren't overridden
   en: uiStrings, // English uses the base uiStrings
   de: {
-    ...uiStrings, // Start with English strings and override
+    // Common
     actions: "Aktionen",
     cancel: "Abbrechen",
     delete: "Löschen",
@@ -241,9 +249,11 @@ export const translations: Record<Locale, typeof uiStrings> = {
     clearDate: "Datum löschen",
     areYouSure: "Sind Sie sicher?",
     cannotBeUndone: "Diese Aktion kann nicht rückgängig gemacht werden.",
+    // Navbar
     logout: "Abmelden",
     toggleNavigation: "Navigation umschalten",
     userProfile: "Benutzerprofil",
+    // Login Page
     loginPageTitle: "Bei Hammonia Taxi Shift anmelden",
     loginPageSubtitle: "Verwalten Sie Ihre Taxi-Schichten effizient.",
     emailAddressLabel: "E-Mail-Adresse",
@@ -254,11 +264,13 @@ export const translations: Record<Locale, typeof uiStrings> = {
     forgotPasswordLink: "Passwort vergessen?",
     showPassword: "Passwort anzeigen",
     hidePassword: "Passwort ausblenden",
+    // Auth related toasts
     loginSuccessful: "Anmeldung erfolgreich",
     welcomeBack: "Willkommen zurück bei ShiftCycle!",
     loginFailed: "Anmeldung fehlgeschlagen",
     forgotPasswordToastTitle: "Passwort vergessen",
     forgotPasswordToastDesc: "Die Funktion zum Zurücksetzen des Passworts wäre hier.",
+    // Driver Dashboard
     driverDashboardTitle: "Fahrer-Dashboard",
     driverDashboardWelcome: "Willkommen, {firstName}! Verwalten Sie hier Ihre Schichten und Buchungen.",
     myUpcomingShifts: "Meine bevorstehenden Schichten",
@@ -268,15 +280,17 @@ export const translations: Record<Locale, typeof uiStrings> = {
     bookNewShift: "Neue Schicht buchen",
     noShiftsFound: "Sie haben keine bevorstehenden oder kürzlichen Schichten.",
     loadingYourShifts: "Lade deine Schichten...",
+    errorLoadingShifts: "Ihre Schichten konnten nicht geladen werden.",
     taxi: "Taxi",
     date: "Datum",
     startTime: "Startzeit",
     endTime: "Endzeit",
-    deleteShiftConfirmationTitle: "Schichtlöschung bestätigen",
     deleteShiftConfirmationMessage: "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird die Schicht für Taxi {taxiLicensePlate} am {date} von {startTime} bis {endTime} dauerhaft gelöscht.",
     editShiftToastMessage: "Bearbeite Schicht für {taxiLicensePlate} am {date}. (Bearbeitungsfunktion in diesem Beispiel nicht vollständig implementiert)",
     noTaxisActive: "Derzeit sind keine Taxis als aktiv markiert.",
     loadingTaxis: "Lade Taxis...",
+    errorLoadingTaxis: "Taxidaten konnten nicht geladen werden.",
+    // Taxi Booking Modal
     bookTaxiShiftTitle: "Taxischicht buchen",
     bookTaxiShiftDescription: "Wählen Sie ein Taxi, Datum/Daten und eine Zeit für Ihre Schicht. Max. 10 Stunden pro Schicht.",
     selectATaxi: "Ein Taxi auswählen",
@@ -288,12 +302,15 @@ export const translations: Record<Locale, typeof uiStrings> = {
     endTimeAfterStartTime: "Die Endzeit muss nach der Startzeit liegen. Bei Nachtschichten sicherstellen, dass die Endzeit (z.B. 02:00) logisch nach dem Start (z.B. 22:00 des Vortages) liegt.",
     shiftDurationMax10Hours: "Die Schichtdauer darf 10 Stunden nicht überschreiten.",
     userNotFound: "Benutzer nicht gefunden.",
+    // Admin General
     admin: "Admin",
     driver: "Fahrer",
+    // Admin Sidebar
     adminDrivers: "Fahrer",
     adminTaxis: "Taxis",
     adminAllShifts: "Alle Schichten",
     adminAnalytics: "Analysen",
+    // Admin Drivers Page
     driverManagement: "Fahrerverwaltung",
     driverManagementSubtitle: "Fahrerkonten erstellen, anzeigen und verwalten.",
     allDrivers: "Alle Fahrer",
@@ -301,6 +318,7 @@ export const translations: Record<Locale, typeof uiStrings> = {
     addNewDriver: "Neuen Fahrer hinzufügen",
     noDriversFound: "Keine Fahrer gefunden.",
     loadingDrivers: "Lade Fahrer...",
+    errorLoadingDriverData: "Fahrerdaten konnten nicht geladen werden.",
     driverName: "Name",
     employeeType: "Anstellungsart",
     editDriver: "Fahrer bearbeiten",
@@ -318,6 +336,7 @@ export const translations: Record<Locale, typeof uiStrings> = {
     updatingShiftsDesc: "Fahrername wird in zugehörigen Schichten aktualisiert...",
     shiftsUpdated: "Schichten aktualisiert",
     shiftsUpdatedDesc: "Der Name des Fahrers wurde in seinen Schichten aktualisiert.",
+    // Admin Driver Form Modal
     addDriverModalTitle: "Neuen Fahrer hinzufügen",
     addDriverModalDescription: "Geben Sie die Details für den neuen Fahrer ein. Der Fahrer wird diese E-Mail und dieses Passwort zum Anmelden verwenden.",
     editDriverModalTitle: "Fahrerprofil bearbeiten",
@@ -330,6 +349,7 @@ export const translations: Record<Locale, typeof uiStrings> = {
     selectEmployeeTypePlaceholder: "Anstellungsart auswählen",
     emailCannotBeChanged: "E-Mail kann für bestehende Benutzer nicht geändert werden.",
     saveChanges: "Änderungen speichern",
+    // Admin Taxis Page
     taxiManagement: "Taxiverwaltung",
     taxiManagementSubtitle: "Taxifahrzeuge hinzufügen, anzeigen und verwalten.",
     allTaxis: "Alle Taxis",
@@ -337,6 +357,7 @@ export const translations: Record<Locale, typeof uiStrings> = {
     addNewTaxi: "Neues Taxi hinzufügen",
     noTaxisFound: "Keine Taxis gefunden. Fügen Sie eines hinzu, um zu beginnen.",
     loadingTaxisAdmin: "Lade Taxis...",
+    errorLoadingTaxisAdmin: "Taxidaten konnten nicht geladen werden.",
     licensePlate: "Kennzeichen",
     toggleTaxiStatus: "Taxi {status}",
     activateTaxi: "Taxi aktivieren",
@@ -353,6 +374,7 @@ export const translations: Record<Locale, typeof uiStrings> = {
     taxiWithNewPlateExistsError: "Ein Taxi mit dem neuen Kennzeichen ({licensePlate}) existiert bereits. Umbenennung auf eine bestehende ID nicht möglich.",
     taxiToEditNotFound: "Das zu bearbeitende Taxi konnte nicht gefunden werden. Es wurde möglicherweise während des Vorgangs gelöscht.",
     taxiIdUpdatedSuccessfully: "Taxikennzeichen und Dokumenten-ID erfolgreich von {oldPlate} zu {newPlate} geändert. Zugehörige Schichten aktualisiert.",
+    // Admin Taxi Form Modal
     addTaxiModalTitle: "Neues Taxi hinzufügen",
     addTaxiModalDescription: "Geben Sie das Kennzeichen für das neue Taxi ein.",
     editTaxiModalTitle: "Taxi bearbeiten",
@@ -367,6 +389,7 @@ export const translations: Record<Locale, typeof uiStrings> = {
     errorAddingTaxi: "Taxi konnte nicht hinzugefügt werden.",
     errorUpdatingTaxi: "Taxi konnte nicht aktualisiert werden.",
     adminUserNotFound: "Admin-Benutzer nicht gefunden.",
+    // Admin All Shifts Page
     allShiftsOverview: "Übersicht aller Schichten",
     allShiftsOverviewSubtitle: "Alle gebuchten Schichten aller Fahrer und Taxis anzeigen und verwalten.",
     bookedShifts: "Gebuchte Schichten",
@@ -377,6 +400,7 @@ export const translations: Record<Locale, typeof uiStrings> = {
     allTaxisPlaceholder: "Alle Taxis",
     filterByDate: "Nach Datum filtern",
     loadingAllShifts: "Lade alle Schichten...",
+    errorLoadingAllShifts: "Schichtdaten konnten nicht geladen werden.",
     noShiftsMatchFilters: "Keine Schichten entsprechen Ihren Filtern oder keine Schichten gefunden.",
     shiftDeletedSuccessfully: "Schicht erfolgreich gelöscht.",
     errorDeletingShift: "Schicht konnte nicht gelöscht werden.",
@@ -394,7 +418,10 @@ export const translations: Record<Locale, typeof uiStrings> = {
     noShiftDataForChart: "Keine Schichtdaten zur Anzeige verfügbar.",
     noRecentShiftDataForChart: "Keine aktuellen Schichtdaten zur Anzeige verfügbar.",
     noTaxiUtilizationData: "Keine Taxiauslastungsdaten verfügbar.",
-    // Employee Types (from lib/types.ts)
+    errorLoadingShiftDistribution: "Verteilung der Schichten konnte nicht geladen werden.",
+    errorLoadingTaxiUtilization: "Taxiauslastung konnte nicht geladen werden.",
+    errorLoadingShiftsOverTime: "Schichten im Zeitverlauf konnten nicht geladen werden.",
+    // Employee Types
     employeeTypeFullTime: "Vollzeit Mitarbeiter",
     employeeTypePartTime: "Aushilfe",
     employeeTypeOther: "Sonstiges",
@@ -422,6 +449,3 @@ export const translations: Record<Locale, typeof uiStrings> = {
     shiftConflictDriverDescription: "Der ausgewählte Fahrer ({driverName}) ist bereits für eine andere Schicht zwischen {startTime} und {endTime} am {date} gebucht.",
   },
 };
-
-
-    

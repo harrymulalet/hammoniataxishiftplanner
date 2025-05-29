@@ -10,12 +10,12 @@ import { db } from "@/lib/firebase";
 import type { Shift, UserProfile } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
-import { useTranslation } from "@/hooks/useTranslation"; 
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface ChartData {
   driverName: string;
   shifts: number;
-  fill?: string; 
+  fill?: string;
 }
 
 
@@ -23,9 +23,9 @@ export default function ShiftDistributionChart() {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { t } = useTranslation(); 
+  const { t } = useTranslation();
 
-  const chartConfig = { 
+  const chartConfig = {
     shifts: {
       label: t('shiftsBookedLabel'),
       color: "hsl(var(--chart-1))",
@@ -39,7 +39,7 @@ export default function ShiftDistributionChart() {
       try {
         const driversSnapshot = await getDocs(query(collection(db, "users"), where("role", "==", "driver")));
         const drivers = driversSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserProfile));
-        
+
         const shiftsSnapshot = await getDocs(collection(db, "shifts"));
         const shifts = shiftsSnapshot.docs.map(doc => doc.data() as Shift);
 
@@ -49,19 +49,19 @@ export default function ShiftDistributionChart() {
             driverName: `${driver.firstName} ${driver.lastName}`,
             shifts: driverShifts,
           };
-        }).sort((a,b) => b.shifts - a.shifts); 
+        }).sort((a,b) => b.shifts - a.shifts);
 
         setChartData(data);
       } catch (error) {
         console.error("Error fetching chart data:", error);
-        toast({ variant: "destructive", title: t('error'), description: t("Could not load shift distribution data." as any) }); // Cast if key is not in default
+        toast({ variant: "destructive", title: t('error'), description: t("errorLoadingShiftDistribution") });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [toast, t]); 
+  }, [toast, t]);
 
   if (isLoading) {
     return (
@@ -74,7 +74,7 @@ export default function ShiftDistributionChart() {
   if (chartData.length === 0) {
     return <p className="text-center text-muted-foreground py-10 h-72">{t('noShiftDataForChart')}</p>;
   }
-  
+
   const accessibleChartData = chartData.map(item => ({ ...item, fill: chartConfig.shifts.color }));
 
 
@@ -84,11 +84,11 @@ export default function ShiftDistributionChart() {
         <RechartsBarChart accessibilityLayer data={accessibleChartData} layout="vertical" margin={{ right: 20 }}>
           <CartesianGrid horizontal={false} />
           <XAxis type="number" dataKey="shifts" />
-          <YAxis 
-            dataKey="driverName" 
-            type="category" 
-            tickLine={false} 
-            axisLine={false} 
+          <YAxis
+            dataKey="driverName"
+            type="category"
+            tickLine={false}
+            axisLine={false}
             width={120}
             tick={{fontSize: 12}}
             />
@@ -100,4 +100,3 @@ export default function ShiftDistributionChart() {
     </div>
   );
 }
-

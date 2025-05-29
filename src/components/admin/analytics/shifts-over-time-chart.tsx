@@ -11,10 +11,10 @@ import { db } from "@/lib/firebase";
 import type { Shift } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
-import { useTranslation } from "@/hooks/useTranslation"; 
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface ChartData {
-  date: string; 
+  date: string;
   shifts: number;
 }
 
@@ -23,9 +23,9 @@ export default function ShiftsOverTimeChart() {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { t } = useTranslation(); 
+  const { t } = useTranslation();
 
-  const chartConfig = { 
+  const chartConfig = {
     shifts: {
       label: t('shiftsLabel'),
       color: "hsl(var(--chart-3))",
@@ -52,11 +52,11 @@ export default function ShiftsOverTimeChart() {
 
         const data: ChartData[] = dateRange.map(date => {
           const dateString = format(date, "yyyy-MM-dd");
-          const shiftsOnDate = shifts.filter(shift => 
+          const shiftsOnDate = shifts.filter(shift =>
             format(shift.startTime.toDate(), "yyyy-MM-dd") === dateString
           ).length;
           return {
-            date: format(date, "MMM d"), 
+            date: format(date, "MMM d"),
             shifts: shiftsOnDate,
           };
         });
@@ -64,14 +64,14 @@ export default function ShiftsOverTimeChart() {
         setChartData(data);
       } catch (error) {
         console.error("Error fetching chart data:", error);
-        toast({ variant: "destructive", title: t('error'), description: t("Could not load shifts over time data." as any) }); // Cast if key not in default
+        toast({ variant: "destructive", title: t('error'), description: t("errorLoadingShiftsOverTime") });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [toast, t]); 
+  }, [toast, t]);
 
   if (isLoading) {
     return (
@@ -84,7 +84,7 @@ export default function ShiftsOverTimeChart() {
   if (chartData.length === 0) {
     return <p className="text-center text-muted-foreground py-10 h-72">{t('noRecentShiftDataForChart')}</p>;
   }
-  
+
 
   return (
     <div className="h-72 w-full">
@@ -107,4 +107,3 @@ export default function ShiftsOverTimeChart() {
     </div>
   );
 }
-

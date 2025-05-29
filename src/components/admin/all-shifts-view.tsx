@@ -63,26 +63,37 @@ export default function AllShiftsView() {
     }
     if (!adminProfile || adminProfile.role !== 'admin') {
         setIsLoading(false);
+        setAllShifts([]); // Clear shifts if not admin
+        setDrivers([]);
+        setTaxis([]);
         return;
     }
 
     setIsLoading(true);
     const driversUnsub = onSnapshot(query(collection(db, "users"), where("role", "==", "driver")), snapshot => {
       setDrivers(snapshot.docs.map(d => ({ uid: d.id, ...d.data() } as UserProfile)));
+    }, (error) => {
+      console.error("Error fetching drivers for filter:", error);
+      toast({ variant: "destructive", title: t('error'), description: t('errorLoadingDriverData') });
     });
+
     const taxisUnsub = onSnapshot(query(collection(db, "taxis")), snapshot => {
       setTaxis(snapshot.docs.map(t => ({ id: t.id, ...t.data() } as Taxi)));
+    }, (error) => {
+      console.error("Error fetching taxis for filter:", error);
+      toast({ variant: "destructive", title: t('error'), description: t('errorLoadingTaxisAdmin') });
     });
+
     const shiftsRef = collection(db, "shifts");
     const q = query(shiftsRef, orderBy("startTime", "desc"));
 
     const shiftsUnsub = onSnapshot(q, (querySnapshot) => {
       const shiftsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Shift));
       setAllShifts(shiftsData);
-      setIsLoading(false);
+      setIsLoading(false); // Only set to false after primary data (shifts) is loaded
     }, (error) => {
       console.error("Error fetching shifts:", error);
-      toast({ variant: "destructive", title: t('error'), description: "Could not load shifts data." });
+      toast({ variant: "destructive", title: t('error'), description: t('errorLoadingAllShifts') });
       setIsLoading(false);
     });
 
@@ -126,14 +137,13 @@ export default function AllShiftsView() {
     setShiftToEdit(shift);
     setIsShiftModalOpen(true);
   };
-  
+
   const handleShiftSaved = () => {
-    // Optionally re-fetch or rely on onSnapshot to update data
-    setIsShiftModalOpen(false); 
+    setIsShiftModalOpen(false);
   };
 
 
-  if (isLoading && !isShiftModalOpen) { // Avoid loader when modal is open and fetching its own data
+  if (isLoading && !isShiftModalOpen) {
     return (
       <div className="flex justify-center items-center py-10">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -224,7 +234,7 @@ export default function AllShiftsView() {
               const endTimeDate = shift.endTime.toDate();
               const startDateStr = format(startTimeDate, "yyyy-MM-dd");
               const endDateStr = format(endTimeDate, "yyyy-MM-dd");
-              
+
               let endTimeDisplay = format(endTimeDate, "p");
               if (startDateStr !== endDateStr) {
                 endTimeDisplay = format(endTimeDate, "MMM d, p");
@@ -251,7 +261,7 @@ export default function AllShiftsView() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>{t('areYouSure')}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            {t('deleteShiftAdminConfirmation', { 
+                            {t('deleteShiftAdminConfirmation', {
                               driverName: `${shift.driverFirstName} ${shift.driverLastName}`,
                               taxiLicensePlate: shift.taxiLicensePlate,
                               startTime: format(startTimeDate, "PPP 'at' p"),

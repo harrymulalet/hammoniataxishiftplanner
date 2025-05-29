@@ -40,8 +40,15 @@ export default function MyShiftsTable() {
   const { t } = useTranslation(); // Added
 
   useEffect(() => {
-    if (authLoading || !userProfile) {
-      setIsLoading(authLoading);
+    if (authLoading) {
+      setIsLoading(true);
+      return;
+    }
+
+    // Explicitly check if userProfile and userProfile.uid are available
+    if (!userProfile || !userProfile.uid) {
+      setIsLoading(false);
+      setShifts([]); // Clear shifts if no valid user profile
       return;
     }
 
@@ -49,8 +56,8 @@ export default function MyShiftsTable() {
     const shiftsRef = collection(db, "shifts");
     const q = query(
       shiftsRef,
-      where("driverId", "==", userProfile.uid),
-      orderBy("startTime", "desc") 
+      where("driverId", "==", userProfile.uid), // Safe now due to check above
+      orderBy("startTime", "desc")
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -64,7 +71,7 @@ export default function MyShiftsTable() {
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching shifts:", error);
-      toast({ variant: "destructive", title: t('error'), description: "Could not load your shifts." });
+      toast({ variant: "destructive", title: t('error'), description: t('errorLoadingShifts') }); // Ensure 'errorLoadingShifts' is a valid key
       setIsLoading(false);
     });
 
@@ -80,13 +87,13 @@ export default function MyShiftsTable() {
       toast({ variant: "destructive", title: t('error'), description: t('errorDeletingShift') });
     }
   };
-  
+
   const handleEditShift = (shift: Shift) => {
-    toast({ 
-        title: t('edit'), 
-        description: t('editShiftToastMessage', { 
-            taxiLicensePlate: shift.taxiLicensePlate, 
-            date: format(shift.startTime.toDate(), "PPP") 
+    toast({
+        title: t('edit'),
+        description: t('editShiftToastMessage', {
+            taxiLicensePlate: shift.taxiLicensePlate,
+            date: format(shift.startTime.toDate(), "PPP")
         })
     });
   };
@@ -123,7 +130,7 @@ export default function MyShiftsTable() {
             const endTimeDate = shift.endTime.toDate();
             const startDateStr = startTimeDate.toDateString();
             const endDateStr = endTimeDate.toDateString();
-            
+
             let endTimeDisplay = format(endTimeDate, "p");
             if (startDateStr !== endDateStr) {
                 endTimeDisplay = format(endTimeDate, "MMM d, p");
@@ -153,7 +160,7 @@ export default function MyShiftsTable() {
                             taxiLicensePlate: shift.taxiLicensePlate,
                             date: format(startTimeDate, "PPP"),
                             startTime: format(startTimeDate, "p"),
-                            endTime: format(endTimeDate, "p")
+                            endTime: format(endTimeDate, "p") // This was 'format(endTimeDate, "p")' which is fine
                           })}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
@@ -177,3 +184,4 @@ export default function MyShiftsTable() {
     </div>
   );
 }
+

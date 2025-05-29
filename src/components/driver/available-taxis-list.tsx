@@ -28,7 +28,7 @@ export default function AvailableTaxisList() {
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching taxis:", error);
-      toast({ variant: "destructive", title: t('error'), description: t('loadingTaxis') });
+      toast({ variant: "destructive", title: t('error'), description: t('errorLoadingTaxis') });
       setIsLoading(false);
     });
 

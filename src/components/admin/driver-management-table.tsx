@@ -29,7 +29,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import AddDriverModal from "./driver-form-modal"; 
+import AddDriverModal from "./driver-form-modal";
 import { useTranslation } from "@/hooks/useTranslation"; // Added
 
 export default function DriverManagementTable() {
@@ -48,6 +48,7 @@ export default function DriverManagementTable() {
     }
     if (!adminProfile || adminProfile.role !== 'admin') {
         setIsLoading(false);
+        setDrivers([]); // Clear drivers if not admin
         return;
     }
 
@@ -61,7 +62,7 @@ export default function DriverManagementTable() {
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching drivers:", error);
-      toast({ variant: "destructive", title: t('error'), description: "Could not load driver data." });
+      toast({ variant: "destructive", title: t('error'), description: t('errorLoadingDriverData') });
       setIsLoading(false);
     });
 
