@@ -1,7 +1,7 @@
 
 "use client";
 
-import { collection, query, onSnapshot, orderBy, doc, deleteDoc, updateDoc, where } from "firebase/firestore";
+import { collection, query, onSnapshot, orderBy, doc, deleteDoc, updateDoc, where, getDocs, writeBatch } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Loader2, Edit3, Trash2, UserPlus } from "lucide-react";
 
@@ -30,7 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import AddDriverModal from "./driver-form-modal";
-import { useTranslation } from "@/hooks/useTranslation"; // Added
+import { useTranslation } from "@/hooks/useTranslation"; 
 
 export default function DriverManagementTable() {
   const { userProfile: adminProfile, loading: authLoading } = useAuth();
@@ -39,7 +39,7 @@ export default function DriverManagementTable() {
   const [editingDriver, setEditingDriver] = useState<UserProfile | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { toast } = useToast();
-  const { t } = useTranslation(); // Added
+  const { t } = useTranslation(); 
 
   useEffect(() => {
     if (authLoading) {
@@ -48,7 +48,7 @@ export default function DriverManagementTable() {
     }
     if (!adminProfile || adminProfile.role !== 'admin') {
         setIsLoading(false);
-        setDrivers([]); // Clear drivers if not admin
+        setDrivers([]); 
         return;
     }
 
@@ -69,19 +69,42 @@ export default function DriverManagementTable() {
     return () => unsubscribe();
   }, [adminProfile, authLoading, toast, t]);
 
-  const handleDeleteDriver = async (driverId: string) => {
+  const handleDeleteDriver = async (driverId: string, driverName: string) => {
     toast({
       variant: "default",
-      title: t('partialDeletion'),
-      description: t('partialDeletionDesc'),
+      title: t('deletingDriverTitle'),
+      description: t('deletingDriverDesc', { driverName }),
       duration: 7000,
     });
     try {
+      // 1. Query and delete associated shifts
+      const shiftsQuery = query(collection(db, "shifts"), where("driverId", "==", driverId));
+      const shiftsSnapshot = await getDocs(shiftsQuery);
+      
+      if (!shiftsSnapshot.empty) {
+        const batch = writeBatch(db);
+        shiftsSnapshot.forEach(shiftDoc => {
+          batch.delete(shiftDoc.ref);
+        });
+        await batch.commit();
+        toast({ title: t('success'), description: t('associatedShiftsDeleted', { count: shiftsSnapshot.size }) });
+      } else {
+        toast({ title: t('info'), description: t('noAssociatedShiftsFound') });
+      }
+
+      // 2. Delete driver profile
       await deleteDoc(doc(db, "users", driverId));
-      toast({ title: t('success'), description: t('deleteProfile') });
+      toast({ title: t('success'), description: t('driverProfileAndShiftsDeleted') });
+      toast({
+        title: t('manualActionRequired'),
+        description: t('manualFirebaseAuthDelete'),
+        duration: 10000, // Keep this visible longer
+        variant: "default" 
+      });
+
     } catch (error) {
-      console.error("Error deleting driver profile:", error);
-      toast({ variant: "destructive", title: t('error'), description: "Could not delete driver profile." });
+      console.error("Error deleting driver and/or shifts:", error);
+      toast({ variant: "destructive", title: t('error'), description: t('errorDeletingDriverAndShifts') });
     }
   };
 
@@ -135,16 +158,16 @@ export default function DriverManagementTable() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>{t('areYouSure')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          {t('deleteDriverProfileConfirmationMessage', { firstName: driver.firstName, lastName: driver.lastName })}
+                          {t('deleteDriverAndShiftsConfirmation', { firstName: driver.firstName, lastName: driver.lastName })}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleDeleteDriver(driver.uid)}
+                          onClick={() => handleDeleteDriver(driver.uid, `${driver.firstName} ${driver.lastName}`)}
                           className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                         >
-                          {t('deleteProfile')}
+                          {t('deleteDriverAndShiftsButton')}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

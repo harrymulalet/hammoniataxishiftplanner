@@ -25,6 +25,7 @@ export const uiStrings = {
   clearDate: "Clear Date",
   areYouSure: "Are you sure?",
   cannotBeUndone: "This action cannot be undone.",
+  info: "Info",
   // Navbar
   logout: "Log out",
   toggleNavigation: "Toggle Navigation",
@@ -56,17 +57,17 @@ export const uiStrings = {
   bookNewShift: "Book New Shift",
   noShiftsFound: "You have no upcoming or recent shifts.",
   loadingYourShifts: "Loading your shifts...",
-  errorLoadingShifts: "Could not load your shifts.", // Added
+  errorLoadingShifts: "Could not load your shifts.", 
   taxi: "Taxi",
   date: "Date",
   startTime: "Start Time",
   endTime: "End Time",
-  deleteShiftConfirmationTitle: "Delete Shift Confirmation", // This key seems fine, though specific to driver.
+  deleteShiftConfirmationTitle: "Delete Shift Confirmation", 
   deleteShiftConfirmationMessage: "This action cannot be undone. This will permanently delete the shift for taxi {taxiLicensePlate} on {date} from {startTime} to {endTime}.",
   editShiftToastMessage: "Editing shift for {taxiLicensePlate} on {date}. (Edit functionality not fully implemented in this example)",
   noTaxisActive: "No taxis are currently marked as active.",
-  loadingTaxis: "Loading taxis...", // Used for loading state
-  errorLoadingTaxis: "Could not load taxi data.", // Added for errors
+  loadingTaxis: "Loading taxis...", 
+  errorLoadingTaxis: "Could not load taxi data.", 
   // Taxi Booking Modal
   bookTaxiShiftTitle: "Book a Taxi Shift",
   bookTaxiShiftDescription: "Select a taxi, date(s), and time for your shift. Max 10 hours per shift.",
@@ -81,7 +82,7 @@ export const uiStrings = {
   userNotFound: "User not found.",
   // Admin General
   admin: "Admin",
-  driver: "Driver", // Role display
+  driver: "Driver", 
   // Admin Sidebar
   adminDrivers: "Drivers",
   adminTaxis: "Taxis",
@@ -94,16 +95,16 @@ export const uiStrings = {
   allDriversDescription: "A list of all registered drivers in the system.",
   addNewDriver: "Add New Driver",
   noDriversFound: "No drivers found.",
-  loadingDrivers: "Loading drivers...", // Used in DriverManagementTable
-  errorLoadingDriverData: "Could not load driver data.", // Specific error for DriverManagementTable
+  loadingDrivers: "Loading drivers...", 
+  errorLoadingDriverData: "Could not load driver data.", 
   driverName: "Name",
   employeeType: "Employee Type",
   editDriver: "Edit driver",
   deleteDriver: "Delete driver",
   deleteDriverProfileConfirmationMessage: "This will delete the driver profile for {firstName} {lastName}. The Firebase Authentication user account will need to be deleted manually from the Firebase Console. This action cannot be undone.",
   deleteProfile: "Delete Profile",
-  partialDeletion: "Partial Deletion",
-  partialDeletionDesc: "Driver profile in database deleted. Firebase Auth user must be deleted manually from Firebase Console for full removal.",
+  partialDeletion: "Partial Deletion", // Old key, can be removed or repurposed if desired
+  partialDeletionDesc: "Driver profile in database deleted. Firebase Auth user must be deleted manually from Firebase Console for full removal.", // Old key
   driverProfileUpdatedSuccessfully: "Driver profile updated successfully.",
   driverCreatedSuccessfully: "Driver Created",
   driverCreatedDesc: "{firstName} {lastName} added. Password: {password} (Please communicate securely and advise driver to change it).",
@@ -113,6 +114,17 @@ export const uiStrings = {
   updatingShiftsDesc: "Updating driver name in associated shifts...",
   shiftsUpdated: "Shifts Updated",
   shiftsUpdatedDesc: "Driver's name has been updated in their shifts.",
+  deletingDriverTitle: "Deleting Driver",
+  deletingDriverDesc: "Deleting profile and associated shifts for {driverName}...",
+  associatedShiftsDeleted: "{count} associated shift(s) deleted.",
+  noAssociatedShiftsFound: "No associated shifts found for this driver.",
+  driverProfileAndShiftsDeleted: "Driver profile and all associated shifts deleted from Firestore.",
+  manualActionRequired: "Manual Action Required",
+  manualFirebaseAuthDelete: "The Firebase Authentication user account must be deleted manually from the Firebase Console for complete removal.",
+  errorDeletingDriverAndShifts: "Error deleting driver profile and/or associated shifts.",
+  deleteDriverAndShiftsConfirmation: "This will delete the driver profile for {firstName} {lastName} and all their associated shifts from Firestore. The Firebase Authentication user account will need to be deleted manually from the Firebase Console. This action cannot be undone.",
+  deleteDriverAndShiftsButton: "Delete Profile & Shifts",
+
   // Admin Driver Form Modal
   addDriverModalTitle: "Add New Driver",
   addDriverModalDescription: "Enter the details for the new driver. The driver will use this email and password to log in.",
@@ -133,16 +145,16 @@ export const uiStrings = {
   allTaxisDescription: "A list of all registered taxis in the system.",
   addNewTaxi: "Add New Taxi",
   noTaxisFound: "No taxis found. Add one to get started.",
-  loadingTaxisAdmin: "Loading taxis...", // Used in TaxiManagementTable
-  errorLoadingTaxisAdmin: "Could not load taxi data.", // Specific for TaxiManagementTable
+  loadingTaxisAdmin: "Loading taxis...", 
+  errorLoadingTaxisAdmin: "Could not load taxi data.", 
   licensePlate: "License Plate",
-  toggleTaxiStatus: "{status} taxi", // e.g. "Activate taxi"
+  toggleTaxiStatus: "{status} taxi", 
   activateTaxi: "Activate taxi",
   deactivateTaxi: "Deactivate taxi",
   editTaxi: "Edit taxi",
   deleteTaxi: "Delete taxi",
   deleteTaxiConfirmationMessage: "This will permanently delete the taxi with license plate {licensePlate}. This action cannot be undone. Consider deactivating it instead if it might be used later.",
-  taxiStatusUpdated: "Taxi {licensePlate} {status}.", // e.g. Taxi ABC-123 activated.
+  taxiStatusUpdated: "Taxi {licensePlate} {status}.", 
   activated: "activated",
   deactivated: "deactivated",
   errorUpdatingTaxiStatus: "Could not update taxi status.",
@@ -176,8 +188,8 @@ export const uiStrings = {
   filterByTaxi: "Filter by Taxi",
   allTaxisPlaceholder: "All Taxis",
   filterByDate: "Filter by Date",
-  loadingAllShifts: "Loading all shifts...", // Used in AllShiftsView
-  errorLoadingAllShifts: "Could not load shifts data.", // Specific for AllShiftsView
+  loadingAllShifts: "Loading all shifts...", 
+  errorLoadingAllShifts: "Could not load shifts data.", 
   noShiftsMatchFilters: "No shifts match your filters, or no shifts found.",
   shiftDeletedSuccessfully: "Shift deleted successfully.",
   errorDeletingShift: "Could not delete shift.",
@@ -228,8 +240,8 @@ export const uiStrings = {
 
 export type TranslationKey = keyof typeof uiStrings;
 
-export const translations: Record<Locale, Partial<typeof uiStrings>> = { // Use Partial for German to avoid listing all keys if some aren't overridden
-  en: uiStrings, // English uses the base uiStrings
+export const translations: Record<Locale, Partial<typeof uiStrings>> = { 
+  en: uiStrings, 
   de: {
     // Common
     actions: "Aktionen",
@@ -249,6 +261,7 @@ export const translations: Record<Locale, Partial<typeof uiStrings>> = { // Use 
     clearDate: "Datum löschen",
     areYouSure: "Sind Sie sicher?",
     cannotBeUndone: "Diese Aktion kann nicht rückgängig gemacht werden.",
+    info: "Info",
     // Navbar
     logout: "Abmelden",
     toggleNavigation: "Navigation umschalten",
@@ -299,7 +312,7 @@ export const translations: Record<Locale, Partial<typeof uiStrings>> = { // Use 
     errorBookingShift: "Schicht(en) konnten nicht gebucht werden. Bitte auf Konflikte prüfen oder erneut versuchen.",
     bookingConflictTitle: "Buchungskonflikt",
     bookingConflictDescription: "Das Taxi ist bereits für den {date} zwischen {startTime} und {endTime} gebucht. Bitte eine andere Zeit oder ein anderes Taxi wählen.",
-    endTimeAfterStartTime: "Die Endzeit muss nach der Startzeit liegen. Bei Nachtschichten sicherstellen, dass die Endzeit (z.B. 02:00) logisch nach dem Start (z.B. 22:00 des Vortages) liegt.",
+    endTimeAfterStartTime: "Die Endzeit muss nach der Startzeit liegen. Bei Nachtschichten sicherstellen, dass die Endzeit (z.B. 02:00 Uhr) logisch nach dem Start (z.B. 22:00 Uhr des Vortages) liegt.",
     shiftDurationMax10Hours: "Die Schichtdauer darf 10 Stunden nicht überschreiten.",
     userNotFound: "Benutzer nicht gefunden.",
     // Admin General
@@ -323,10 +336,8 @@ export const translations: Record<Locale, Partial<typeof uiStrings>> = { // Use 
     employeeType: "Anstellungsart",
     editDriver: "Fahrer bearbeiten",
     deleteDriver: "Fahrer löschen",
-    deleteDriverProfileConfirmationMessage: "Dadurch wird das Fahrerprofil für {firstName} {lastName} gelöscht. Das Firebase-Authentifizierungsbenutzerkonto muss manuell aus der Firebase-Konsole gelöscht werden. Diese Aktion kann nicht rückgängig gemacht werden.",
+    deleteDriverProfileConfirmationMessage: "Dadurch wird das Fahrerprofil für {firstName} {lastName} gelöscht. Das Firebase-Authentifizierungsbenutzerkonto muss manuell aus der Firebase-Konsole gelöscht werden. Diese Aktion kann nicht rückgängig gemacht werden.", // Old key
     deleteProfile: "Profil löschen",
-    partialDeletion: "Teilweise Löschung",
-    partialDeletionDesc: "Fahrerprofil in der Datenbank gelöscht. Firebase Auth-Benutzer muss für vollständige Entfernung manuell aus der Firebase-Konsole gelöscht werden.",
     driverProfileUpdatedSuccessfully: "Fahrerprofil erfolgreich aktualisiert.",
     driverCreatedSuccessfully: "Fahrer erstellt",
     driverCreatedDesc: "{firstName} {lastName} hinzugefügt. Passwort: {password} (Bitte sicher kommunizieren und Fahrer anweisen, es zu ändern).",
@@ -336,6 +347,17 @@ export const translations: Record<Locale, Partial<typeof uiStrings>> = { // Use 
     updatingShiftsDesc: "Fahrername wird in zugehörigen Schichten aktualisiert...",
     shiftsUpdated: "Schichten aktualisiert",
     shiftsUpdatedDesc: "Der Name des Fahrers wurde in seinen Schichten aktualisiert.",
+    deletingDriverTitle: "Fahrer wird gelöscht",
+    deletingDriverDesc: "Profil und zugehörige Schichten für {driverName} werden gelöscht...",
+    associatedShiftsDeleted: "{count} zugehörige Schicht(en) gelöscht.",
+    noAssociatedShiftsFound: "Keine zugehörigen Schichten für diesen Fahrer gefunden.",
+    driverProfileAndShiftsDeleted: "Fahrerprofil und alle zugehörigen Schichten aus Firestore gelöscht.",
+    manualActionRequired: "Manuelle Aktion erforderlich",
+    manualFirebaseAuthDelete: "Das Firebase Authentifizierungs-Benutzerkonto muss für eine vollständige Entfernung manuell aus der Firebase Konsole gelöscht werden.",
+    errorDeletingDriverAndShifts: "Fehler beim Löschen des Fahrerprofils und/oder der zugehörigen Schichten.",
+    deleteDriverAndShiftsConfirmation: "Dies löscht das Fahrerprofil für {firstName} {lastName} und alle zugehörigen Schichten aus Firestore. Das Firebase Authentifizierungs-Benutzerkonto muss manuell aus der Firebase Konsole gelöscht werden. Diese Aktion kann nicht rückgängig gemacht werden.",
+    deleteDriverAndShiftsButton: "Profil & Schichten löschen",
+
     // Admin Driver Form Modal
     addDriverModalTitle: "Neuen Fahrer hinzufügen",
     addDriverModalDescription: "Geben Sie die Details für den neuen Fahrer ein. Der Fahrer wird diese E-Mail und dieses Passwort zum Anmelden verwenden.",
@@ -426,8 +448,8 @@ export const translations: Record<Locale, Partial<typeof uiStrings>> = { // Use 
     employeeTypePartTime: "Aushilfe",
     employeeTypeOther: "Sonstiges",
     // Chart specific
-    shiftsBookedLabel: "Gebuchte Schichten",
-    hoursBookedLabel: "Gebuchte Stunden",
+    shiftsBookedLabel: "Geb. Schichten",
+    hoursBookedLabel: "Geb. Stunden",
     shiftsLabel: "Schichten",
     // Admin Shift Form Modal
     adminAddNewShift: "Neue Schicht hinzufügen",
