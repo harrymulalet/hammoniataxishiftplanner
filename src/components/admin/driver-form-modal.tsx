@@ -38,7 +38,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
 import { employeeTypes, type EmployeeType, type UserProfile, type Shift } from "@/lib/types";
-import { useTranslation } from "@/hooks/useTranslation"; // Added
+import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/hooks/useAuth"; // Added useAuth
 
 const driverSchemaBase = z.object({
   firstName: z.string().min(1, "First name is required."),
@@ -68,7 +69,8 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
-  const { t } = useTranslation(); // Added
+  const { t } = useTranslation();
+  const { userProfile: currentActingUserProfile } = useAuth(); // Get current user's profile from context
 
   const isEditing = !!driverToEdit;
   const currentSchema = isEditing ? editDriverSchema : addDriverSchema;
@@ -94,14 +96,14 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
 
 
   useEffect(() => {
-    if (driverToEdit) {
+    if (driverToEdit && isOpen) { // Ensure form resets only when modal opens with a driverToEdit
       form.reset({
         firstName: driverToEdit.firstName,
         lastName: driverToEdit.lastName,
         email: driverToEdit.email, 
         employeeType: driverToEdit.employeeType,
       });
-    } else {
+    } else if (!isEditing && isOpen) { // Reset for "add new" only when modal opens
       form.reset({
         firstName: "",
         lastName: "",
@@ -110,18 +112,30 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
         employeeType: undefined,
       });
     }
-  }, [driverToEdit, form, isOpen]);
+  }, [driverToEdit, form, isOpen, isEditing]); // Added isEditing to dependencies
 
 
   async function onSubmit(data: AddDriverFormValues | EditDriverFormValues) {
     setIsLoading(true);
     try {
       if (isEditing && driverToEdit) {
+        // Admin check for editing (though typically editing own profile might be allowed for drivers too)
+        if (!currentActingUserProfile || currentActingUserProfile.role !== 'admin') {
+           toast({
+            variant: "destructive",
+            title: t('error'),
+            description: t('adminActionNotAuthorized'), // Ensure this key exists
+          });
+          setIsLoading(false);
+          return;
+        }
+
         const driverRef = doc(db, "users", driverToEdit.uid);
         const updatedProfileData: Partial<UserProfile> = {
           firstName: data.firstName,
           lastName: data.lastName,
           employeeType: data.employeeType,
+          // email cannot be changed here as per previous logic
         };
         await updateDoc(driverRef, updatedProfileData);
         toast({ title: t('success'), description: t('driverProfileUpdatedSuccessfully') });
@@ -145,19 +159,39 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
           }
         }
 
-      } else {
+      } else { // Adding a new driver
+        // Client-side check: is the current user an admin?
+        if (!currentActingUserProfile || currentActingUserProfile.role !== 'admin') {
+          toast({
+            variant: "destructive",
+            title: t('error'),
+            description: t('adminActionNotAuthorized'), // Ensure this key exists or add: "Only admins can create new drivers."
+          });
+          setIsLoading(false);
+          return;
+        }
+
         const addData = data as AddDriverFormValues;
+        // IMPORTANT: createUserWithEmailAndPassword will sign in the NEW user
+        // The subsequent setDoc for the user profile is authenticated as this NEW user,
+        // NOT the admin, if not handled carefully (e.g. by using Admin SDK in backend).
+        // However, the security rules for setDoc will evaluate request.auth.uid based on
+        // who initiated the setDoc call (the admin who is logged in when clicking submit).
+        // The main problem arises if the Admin's firestore doc doesn't mark them as 'admin'.
+        
         const userCredential = await createUserWithEmailAndPassword(auth, addData.email, addData.password!);
         const newDriver = userCredential.user;
 
+        // This setDoc is performed by the admin (currentActingUserProfile)
+        // Security rules will check if currentActingUserProfile.role is 'admin'
         await setDoc(doc(db, "users", newDriver.uid), {
           uid: newDriver.uid,
           email: newDriver.email,
           firstName: addData.firstName,
           lastName: addData.lastName,
-          role: "driver",
+          role: "driver", // New users created by admin are drivers
           employeeType: addData.employeeType,
-          createdAt: serverTimestamp() as Timestamp,
+          createdAt: serverTimestamp() as Timestamp, // This should be serverTimestamp
         });
         toast({
           title: t('driverCreatedSuccessfully'),
@@ -165,13 +199,19 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
           duration: 10000,
         });
       }
-      form.reset();
+      form.reset(); // Reset form on successful operation
       setIsOpen(false);
       if (onClose) onClose();
     } catch (error: any) {
       console.error(`Error ${isEditing ? 'updating' : 'adding'} driver:`, error);
-      const errorMessageKey = isEditing ? 'errorUpdatingDriver' : 'errorAddingDriver';
-      toast({ variant: "destructive", title: t('error'), description: error.message || t(errorMessageKey) });
+      // Check for specific Firebase error codes if needed
+      let errorMessage = error.message || (isEditing ? t('errorUpdatingDriver') : t('errorAddingDriver'));
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = t('emailAlreadyInUseError'); // Add this translation key
+      } else if (error.code === 'permission-denied' || error.message.includes('Missing or insufficient permissions')) {
+        errorMessage = t('firestorePermissionErrorDriverCreate'); // Add this translation key
+      }
+      toast({ variant: "destructive", title: t('error'), description: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -179,8 +219,28 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
   
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open && onClose) {
-      onClose();
+    if (!open) { // If modal is closing
+      form.clearErrors(); // Clear any existing form errors
+      if (onClose) {
+        onClose();
+      }
+       // Reset form to initial state when closing, depending on if it was for edit or add
+      if (isEditing && driverToEdit) {
+        form.reset({
+            firstName: driverToEdit.firstName,
+            lastName: driverToEdit.lastName,
+            email: driverToEdit.email, 
+            employeeType: driverToEdit.employeeType,
+        });
+      } else if (!isEditing) {
+         form.reset({
+            firstName: "",
+            lastName: "",
+            email: "",
+            password: "",
+            employeeType: undefined,
+        });
+      }
     }
   };
 
@@ -281,7 +341,7 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('employeeTypeLabel')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder={t('selectEmployeeTypePlaceholder')} />
@@ -311,3 +371,4 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
   );
 }
 
+    
