@@ -2,8 +2,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth"; // Added sendPasswordResetEmail
-import { Eye, EyeOff, Loader2, MailQuestion } from "lucide-react"; // Added MailQuestion
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { Eye, EyeOff, Loader2, MailQuestion } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -35,7 +35,7 @@ export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isResettingPassword, setIsResettingPassword] = useState(false); // Added state for reset
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { role } = useAuth();
   const { t } = useTranslation();
@@ -62,7 +62,7 @@ export function LoginForm() {
       toast({
         variant: "destructive",
         title: t('loginFailed'),
-        description: error.message || t('genericLoginError'), // Use a generic key
+        description: error.message || t('genericLoginError'),
       });
     } finally {
       setIsLoading(false);
@@ -70,7 +70,21 @@ export function LoginForm() {
   }
 
   const handlePasswordReset = async () => {
-    const emailForReset = window.prompt(t('enterEmailForPasswordReset'));
+    console.log("handlePasswordReset triggered. Current states: isResettingPassword =", isResettingPassword, ", isLoading =", isLoading);
+    let emailForReset: string | null = null;
+    try {
+      emailForReset = window.prompt(t('enterEmailForPasswordReset'));
+    } catch (promptError: any) {
+      console.error("Error during window.prompt or translation for password reset:", promptError);
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: "Could not display password reset prompt.",
+      });
+      setIsResettingPassword(false); // Ensure state is reset if prompt fails
+      return;
+    }
+
     if (emailForReset) {
       setIsResettingPassword(true);
       try {
@@ -96,6 +110,8 @@ export function LoginForm() {
       } finally {
         setIsResettingPassword(false);
       }
+    } else {
+      console.log("Password reset prompt cancelled or no email entered.");
     }
   };
 
