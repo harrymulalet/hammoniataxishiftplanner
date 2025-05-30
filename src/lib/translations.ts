@@ -133,8 +133,11 @@ export const uiStrings = {
   deleteDriverAndShiftsConfirmation: "This will delete the driver profile for {firstName} {lastName} and all their associated shifts from Firestore. The Firebase Authentication user account will need to be deleted manually from the Firebase Console. This action cannot be undone.",
   deleteDriverAndShiftsButton: "Delete Profile & Shifts",
   adminActionNotAuthorized: "Action not authorized. You must be an admin.",
+  adminActionNotAuthorizedDriverCreate: "Action not authorized. You must be an admin to create a driver. Ensure your admin account has the 'admin' role in Firestore.",
   emailAlreadyInUseError: "This email address is already in use by another account.",
   firestorePermissionErrorDriverCreate: "Could not create driver profile in the database. Please verify admin permissions and data.",
+  firestorePermissionErrorDriverCreateAdminCheck: "Driver profile creation failed. This usually means your current admin account does not have the required permissions in Firestore. Please verify your admin account's 'role' is set to 'admin' in the 'users' collection.",
+  firestorePermissionErrorGeneral: "A Firestore permission error occurred. Please check your security rules and data.",
 
 
   // Admin Driver Form Modal
@@ -380,8 +383,11 @@ export const translations: Record<Locale, Partial<typeof uiStrings>> = {
     deleteDriverAndShiftsConfirmation: "Dies löscht das Fahrerprofil für {firstName} {lastName} und alle zugehörigen Schichten aus Firestore. Das Firebase Authentifizierungs-Benutzerkonto muss manuell aus der Firebase Konsole gelöscht werden. Diese Aktion kann nicht rückgängig gemacht werden.",
     deleteDriverAndShiftsButton: "Profil & Schichten löschen",
     adminActionNotAuthorized: "Aktion nicht autorisiert. Sie müssen ein Administrator sein.",
+    adminActionNotAuthorizedDriverCreate: "Aktion nicht autorisiert. Sie müssen Administrator sein, um einen Fahrer zu erstellen. Stellen Sie sicher, dass Ihr Administratorkonto die Rolle 'admin' in Firestore hat.",
     emailAlreadyInUseError: "Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet.",
     firestorePermissionErrorDriverCreate: "Fahrerprofil konnte nicht in der Datenbank erstellt werden. Bitte Admin-Berechtigungen und Daten überprüfen.",
+    firestorePermissionErrorDriverCreateAdminCheck: "Erstellung des Fahrerprofils fehlgeschlagen. Dies bedeutet normalerweise, dass Ihr aktuelles Administratorkonto nicht über die erforderlichen Berechtigungen in Firestore verfügt. Bitte überprüfen Sie, ob die 'role' Ihres Administratorkontos in der 'users'-Sammlung auf 'admin' gesetzt ist.",
+    firestorePermissionErrorGeneral: "Ein Firestore-Berechtigungsfehler ist aufgetreten. Bitte überprüfen Sie Ihre Sicherheitsregeln und Daten.",
 
     // Admin Driver Form Modal
     addDriverModalTitle: "Neuen Fahrer hinzufügen",
@@ -496,5 +502,7 @@ export const translations: Record<Locale, Partial<typeof uiStrings>> = {
     shiftConflictDriverDescription: "Der ausgewählte Fahrer ({driverName}) ist bereits für eine andere Schicht zwischen {startTime} und {endTime} am {date} gebucht.",
   },
 };
+
+    
 
     

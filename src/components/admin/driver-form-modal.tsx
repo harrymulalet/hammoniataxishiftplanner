@@ -160,6 +160,7 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
         }
 
       } else { 
+        // Logic for adding a new driver
         if (!currentActingUserProfile || currentActingUserProfile.role !== 'admin') {
           toast({
             variant: "destructive",
@@ -196,11 +197,15 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
     } catch (error: any) {
       console.error(`Error ${isEditing ? 'updating' : 'adding'} driver:`, error);
       
-      let errorMessage = error.message || (isEditing ? t('errorUpdatingDriver') : t('errorAddingDriver'));
+      let errorMessage = isEditing ? t('errorUpdatingDriver') : t('errorAddingDriver');
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = t('emailAlreadyInUseError');
-      } else if (error.code === 'permission-denied' || error.message.includes('Missing or insufficient permissions')) {
-        errorMessage = t('firestorePermissionErrorDriverCreate'); 
+      } else if (error.code === 'permission-denied' || error.message?.includes('Missing or insufficient permissions')) {
+        if (!isEditing) { // Specifically for creation failure
+            errorMessage = t('firestorePermissionErrorDriverCreateAdminCheck');
+        } else {
+            errorMessage = t('firestorePermissionErrorGeneral');
+        }
       }
       toast({ variant: "destructive", title: t('error'), description: errorMessage });
     } finally {
@@ -360,6 +365,8 @@ export default function AddDriverModal({ isOpen: controlledIsOpen, setIsOpen: se
     </Dialog>
   );
 }
+    
+
     
 
     
