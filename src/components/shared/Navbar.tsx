@@ -20,12 +20,12 @@ import SiteLogo from './SiteLogo';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { AdminSidebarContent } from '@/components/admin/admin-sidebar';
 import { cn } from '@/lib/utils';
-import LanguageSwitcher from './LanguageSwitcher'; // Added
-import { useTranslation } from '@/hooks/useTranslation'; // Added
+import LanguageSwitcher from './LanguageSwitcher'; 
+import { useTranslation } from '@/hooks/useTranslation'; 
 
 export function Navbar() {
   const { userProfile, logout, isAdmin, loading } = useAuth();
-  const { t } = useTranslation(); // Added
+  const { t } = useTranslation(); 
   const pathname = usePathname();
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -76,7 +76,7 @@ export function Navbar() {
         </div>
         
         <div className="flex items-center gap-2 sm:gap-4">
-          <LanguageSwitcher /> {/* Added */}
+          <LanguageSwitcher /> 
           {userProfile && (
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {userProfile.firstName} {userProfile.lastName} ({t(userProfile.role as 'admin' | 'driver')})
@@ -87,7 +87,6 @@ export function Navbar() {
               <Button variant="ghost" className="relative h-10 w-10 rounded-full" aria-label={t('userProfile')}>
                 <Avatar className="h-9 w-9">
                   <AvatarImage 
-                    src={userProfile?.uid /* Placeholder for actual avatar image URL if available */} 
                     alt={`${userProfile?.firstName || ''} ${userProfile?.lastName || ''}`} 
                     data-ai-hint="user avatar"
                   />
@@ -120,5 +119,3 @@ export function Navbar() {
     </header>
   );
 }
-
-    
