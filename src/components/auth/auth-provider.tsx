@@ -36,7 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
   const pathname = usePathname();
 
   const logout = async () => {
-    setLoading(true); 
+    setLoading(true);
     try {
       await auth.signOut();
     } catch (error) {
@@ -45,9 +45,9 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       setUser(null);
       setUserProfile(null);
       setRole(null);
-      setLoading(false); 
-      if (pathname !== '/login') { 
-         router.push('/login'); 
+      setLoading(false);
+      if (pathname !== '/login') {
+         router.push('/login');
       }
     }
   };
@@ -58,21 +58,41 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
         setUser(firebaseUser);
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         try {
+          console.log(`[AuthProvider] Attempting to fetch profile for UID: ${firebaseUser.uid}`);
           const userDocSnap = await getDoc(userDocRef);
           if (userDocSnap.exists()) {
-            const profile = userDocSnap.data() as UserProfile;
-            setUserProfile(profile);
-            setRole(profile.role || null); 
+            const profileData = userDocSnap.data();
+            if (profileData) {
+              const profile = profileData as UserProfile; // Assume type for now
+              console.log(`[AuthProvider] Raw profile data found for UID ${firebaseUser.uid}:`, JSON.stringify(profile));
+
+              if (profile.role && (profile.role === 'admin' || profile.role === 'driver')) {
+                setUserProfile(profile);
+                setRole(profile.role);
+                console.log(`[AuthProvider] UID ${firebaseUser.uid} role successfully set to: '${profile.role}'`);
+              } else {
+                console.warn(`[AuthProvider] Profile for UID ${firebaseUser.uid} exists but has a missing or invalid 'role' field. Role found: '${profile.role}'. Setting session role to null.`);
+                setUserProfile(profile); // Still set profile for potential partial data access
+                setRole(null);
+              }
+            } else {
+              // This case should ideally not be reached if userDocSnap.exists() is true
+              console.error(`[AuthProvider] userDocSnap.data() returned undefined for UID ${firebaseUser.uid} despite document existing. Setting role to null.`);
+              setUserProfile(null);
+              setRole(null);
+            }
             setLoading(false);
           } else {
-            console.error(`User profile not found in Firestore for UID: ${firebaseUser.uid}. Role will be null. Logging out.`);
-            await logout(); // Call logout if profile not found
-            // setLoading(false) will be handled by logout's finally block
+            console.error(`[AuthProvider] User profile document NOT FOUND in Firestore for UID: ${firebaseUser.uid}. Role will be null. Logging out.`);
+            // setUserProfile(null); // Already handled by logout
+            // setRole(null); // Already handled by logout
+            await logout();
           }
         } catch (error) {
-            console.error(`Error fetching user profile for UID ${firebaseUser.uid}:`, error);
-            await logout(); // Call logout on error fetching profile
-            // setLoading(false) will be handled by logout's finally block
+            console.error(`[AuthProvider] Error fetching user profile for UID ${firebaseUser.uid}:`, error);
+            // setUserProfile(null); // Already handled by logout
+            // setRole(null); // Already handled by logout
+            await logout();
         }
       } else {
         setUser(null);
