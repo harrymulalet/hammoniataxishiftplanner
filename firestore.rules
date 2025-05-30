@@ -4,50 +4,57 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAdmin(userId) {
-      // Ensure the user document exists before trying to access its data.
-      let userDoc = get(/databases/$(database)/documents/users/$(userId));
-      return userDoc.exists == true && userDoc.data.role == 'admin';
-    }
-
-    // Helper function to check if a value is a Firestore Timestamp
+    // Helper Functions
     function isTimestamp(value) {
       return value is timestamp;
     }
 
-    // Helper function to check if a taxi is active
-    function isTaxiActive(taxiId) {
-      let taxiDoc = get(/databases/$(database)/documents/taxis/$(taxiId));
-      return taxiDoc.exists == true && taxiDoc.data.isActive == true;
+    function isAdmin(userId) {
+      // Ensure the user document exists before trying to access its data.
+      let userDoc = get(/databases/$(database)/documents/users/$(userId));
+      return userDoc.exists && userDoc.data.role == 'admin';
     }
 
-    match /users/{userId} {
-      // A user can read their own profile, OR an admin can read any profile.
-      allow read: if request.auth != null &&
-                    (request.auth.uid == userId || isAdmin(request.auth.uid));
+    function isDriver(userId) {
+      let userDoc = get(/databases/$(database)/documents/users/$(userId));
+      return userDoc.exists && userDoc.data.role == 'driver';
+    }
 
-      allow list: if request.auth != null && isAdmin(request.auth.uid); // Admins can list users (e.g., for driver management table)
+    function taxiExistsAndIsActive(taxiId) {
+      let taxiDoc = get(/databases/$(database)/documents/taxis/$(taxiId));
+      return taxiDoc.exists && taxiDoc.data.isActive == true;
+    }
+
+    // User Profiles
+    match /users/{userId} {
+      allow read: if request.auth != null &&
+                    (
+                      (request.auth.uid == userId) || // User can read their own profile
+                      isAdmin(request.auth.uid)      // Admin can read any profile
+                    );
+      allow list: if isAdmin(request.auth.uid); // Allows admins to list/query the users collection
 
       allow create: if request.auth != null &&
                       (
-                        // Case 1: User creating their own profile (e.g., initial signup, if you had such a flow)
-                        // This rule is very specific and likely not hit by current app logic which uses admin creation.
-                        (request.auth.uid == userId &&
-                         request.resource.data.uid == userId &&
-                         request.resource.data.email == request.auth.token.email &&
-                         (request.resource.data.role == 'driver' || request.resource.data.role == 'admin') && // Allows self-creation of admin for first admin
-                         isTimestamp(request.resource.data.createdAt) && request.resource.data.createdAt == request.time &&
-                         request.resource.data.firstName is string && request.resource.data.firstName.size() > 0 &&
-                         request.resource.data.lastName is string && request.resource.data.lastName.size() > 0 &&
-                         (!('employeeType' in request.resource.data) || request.resource.data.employeeType is string)
-                        )
-                        ||
+                        // Case 1: User creating their own profile (e.g., during initial signup - not implemented in this app)
+                        // (request.auth.uid == userId &&
+                        //  request.resource.data.uid == userId &&
+                        //  request.resource.data.email == request.auth.token.email &&
+                        //  request.resource.data.role == 'driver' && // Or some default role
+                        //  isTimestamp(request.resource.data.createdAt) && // This implies client must send actual timestamp
+                        //  request.resource.data.firstName is string && request.resource.data.firstName.size() > 0 &&
+                        //  request.resource.data.lastName is string && request.resource.data.lastName.size() > 0
+                        // )
+                        // || // OR
                         // Case 2: Admin creating a driver profile
                         (isAdmin(request.auth.uid) &&
-                         request.resource.data.role == 'driver' && // Admin can only create 'driver' roles via this rule
-                         request.resource.data.uid == userId && // uid in doc must match doc id
+                         request.resource.data.role == 'driver' && // New profile must be a driver
+                         request.resource.data.uid == userId && // UID in document must match document ID
                          request.resource.data.email is string && request.resource.data.email.size() > 0 &&
-                         isTimestamp(request.resource.data.createdAt) && request.resource.data.createdAt == request.time && // Reverted to this stricter check
+                         // For admin creation with serverTimestamp(), we don't compare createdAt to request.time
+                         // as request.resource.data.createdAt will be a sentinel, not a real timestamp yet.
+                         // isTimestamp(request.resource.data.createdAt) would also be false for a sentinel.
+                         // Firestore handles serverTimestamp() conversion.
                          request.resource.data.firstName is string && request.resource.data.firstName.size() > 0 &&
                          request.resource.data.lastName is string && request.resource.data.lastName.size() > 0 &&
                          request.resource.data.employeeType is string && request.resource.data.employeeType.size() > 0
@@ -59,74 +66,114 @@ service cloud.firestore {
                         // User updating their own profile (cannot change role or email)
                         (request.auth.uid == userId &&
                          request.resource.data.uid == userId &&
-                         request.resource.data.email == resource.data.email && // email cannot be changed
-                         request.resource.data.role == resource.data.role &&   // role cannot be changed by user
+                         request.resource.data.email == resource.data.email && // Email cannot be changed by user
+                         request.resource.data.role == resource.data.role &&   // Role cannot be changed by user
                          request.resource.data.firstName is string && request.resource.data.firstName.size() > 0 &&
                          request.resource.data.lastName is string && request.resource.data.lastName.size() > 0 &&
-                         (!('employeeType' in request.resource.data) || request.resource.data.employeeType is string)
+                         request.resource.data.employeeType is string && request.resource.data.employeeType.size() > 0 &&
+                         isTimestamp(request.resource.data.createdAt) // createdAt cannot be changed
                         )
                         ||
-                        // Admin updating any profile
-                        isAdmin(request.auth.uid)
+                        // Admin updating any profile (can change anything except uid and createdAt)
+                        (isAdmin(request.auth.uid) &&
+                         request.resource.data.uid == userId && // UID must match doc ID
+                         request.resource.data.email is string &&
+                         (request.resource.data.role == 'admin' || request.resource.data.role == 'driver') &&
+                         request.resource.data.firstName is string && request.resource.data.firstName.size() > 0 &&
+                         request.resource.data.lastName is string && request.resource.data.lastName.size() > 0 &&
+                         request.resource.data.employeeType is string && request.resource.data.employeeType.size() > 0 &&
+                         isTimestamp(request.resource.data.createdAt) // createdAt cannot be changed
+                        )
                       );
-      allow delete: if request.auth != null && isAdmin(request.auth.uid);
+      allow delete: if isAdmin(request.auth.uid); // Only admins can delete user profiles
     }
 
+    // Taxi Collection
     match /taxis/{taxiId} {
-      allow read: if request.auth != null &&
-                    (
-                      isAdmin(request.auth.uid) ||
-                      (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver' && resource.data.isActive == true)
-                    );
-      allow list: if request.auth != null &&
-                    (
-                      isAdmin(request.auth.uid) ||
-                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver' // Drivers can list for booking
-                    );
-      allow create, update, delete: if request.auth != null && isAdmin(request.auth.uid);
+      allow read: if request.auth != null && (isDriver(request.auth.uid) || isAdmin(request.auth.uid));
+      allow list: if request.auth != null && (isDriver(request.auth.uid) || isAdmin(request.auth.uid));
+      allow create, update, delete: if isAdmin(request.auth.uid) &&
+                                   request.resource.data.licensePlate is string &&
+                                   request.resource.data.licensePlate.size() > 2 &&
+                                   request.resource.data.licensePlate.size() < 16 &&
+                                   request.resource.data.isActive is bool;
+                                  // For create, createdBy and createdAt are also set
     }
 
+    // Shifts Collection
     match /shifts/{shiftId} {
       allow read: if request.auth != null &&
-                    (isAdmin(request.auth.uid) || request.auth.uid == resource.data.driverId);
-
-      allow list: if request.auth != null && isAdmin(request.auth.uid); // Admins can list all shifts. Driver queries are filtered client-side + backed by read.
+                    (
+                      (resource.data.driverId == request.auth.uid) || // Driver can read their own shifts
+                      isAdmin(request.auth.uid)                       // Admin can read any shift
+                    );
+      allow list: if request.auth != null && // For collection queries
+                    (
+                       // Drivers can query their own shifts. Query must include where("driverId", "==", request.auth.uid)
+                       // This requires an index on driverId.
+                       (isDriver(request.auth.uid) && request.query.resource.data.driverId == request.auth.uid) ||
+                       isAdmin(request.auth.uid) // Admins can list all shifts (e.g. with appropriate filters client-side)
+                    );
 
       allow create: if request.auth != null &&
-                      isTaxiActive(request.resource.data.taxiId) && // Taxi must be active
                       (
-                        // Driver creating their own shift
-                        (request.auth.uid == request.resource.data.driverId &&
-                         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver'
+                        // Driver creating a shift for themselves
+                        (isDriver(request.auth.uid) &&
+                         request.resource.data.driverId == request.auth.uid &&
+                         taxiExistsAndIsActive(request.resource.data.taxiId) &&
+                         isTimestamp(request.resource.data.startTime) &&
+                         isTimestamp(request.resource.data.endTime) &&
+                         request.resource.data.startTime < request.resource.data.endTime
+                        ) ||
+                        // Admin creating a shift
+                        (isAdmin(request.auth.uid) &&
+                         // Ensure driverId for the shift actually exists as a driver
+                         get(/databases/$(database)/documents/users/$(request.resource.data.driverId)).data.role == 'driver' &&
+                         taxiExistsAndIsActive(request.resource.data.taxiId) &&
+                         isTimestamp(request.resource.data.startTime) &&
+                         isTimestamp(request.resource.data.endTime) &&
+                         request.resource.data.startTime < request.resource.data.endTime
                         )
-                        ||
-                        // Admin creating any shift
-                        isAdmin(request.auth.uid)
                       ) &&
-                      isTimestamp(request.resource.data.startTime) &&
-                      isTimestamp(request.resource.data.endTime) &&
-                      request.resource.data.startTime < request.resource.data.endTime &&
-                      isTimestamp(request.resource.data.createdAt) && request.resource.data.createdAt == request.time;
+                      // Common validations for shift creation
+                      request.resource.data.taxiLicensePlate is string &&
+                      request.resource.data.driverFirstName is string &&
+                      request.resource.data.driverLastName is string;
+
 
       allow update: if request.auth != null &&
                       (
-                        // Driver updating their own shift
-                        (request.auth.uid == resource.data.driverId &&
-                         request.resource.data.driverId == resource.data.driverId &&
-                         (request.resource.data.taxiId == resource.data.taxiId || isTaxiActive(request.resource.data.taxiId))
+                        // Driver can update their own shift (e.g. cancel/modify specific fields if allowed)
+                        (isDriver(request.auth.uid) && resource.data.driverId == request.auth.uid &&
+                         request.resource.data.driverId == resource.data.driverId && // Cannot change driverId
+                         taxiExistsAndIsActive(request.resource.data.taxiId) && // Check new taxi if changed
+                         isTimestamp(request.resource.data.startTime) &&
+                         isTimestamp(request.resource.data.endTime) &&
+                         request.resource.data.startTime < request.resource.data.endTime
+                         // Add more specific field update rules if needed
+                        ) ||
+                        // Admin can update any shift
+                        (isAdmin(request.auth.uid) &&
+                         // Ensure driverId for the shift actually exists as a driver
+                         get(/databases/$(database)/documents/users/$(request.resource.data.driverId)).data.role == 'driver' &&
+                         taxiExistsAndIsActive(request.resource.data.taxiId) &&
+                         isTimestamp(request.resource.data.startTime) &&
+                         isTimestamp(request.resource.data.endTime) &&
+                         request.resource.data.startTime < request.resource.data.endTime
                         )
-                        ||
-                        isAdmin(request.auth.uid)
                       ) &&
-                      isTimestamp(request.resource.data.startTime) &&
-                      isTimestamp(request.resource.data.endTime) &&
-                      request.resource.data.startTime < request.resource.data.endTime;
+                      // Common validations for shift updates
+                      request.resource.data.taxiLicensePlate is string &&
+                      request.resource.data.driverFirstName is string &&
+                      request.resource.data.driverLastName is string;
 
       allow delete: if request.auth != null &&
                       (
-                        (request.auth.uid == resource.data.driverId) ||
-                        isAdmin(request.auth.uid)
+                        (isDriver(request.auth.uid) && resource.data.driverId == request.auth.uid) || // Driver can delete their own shift
+                        isAdmin(request.auth.uid) // Admin can delete any shift
                       );
     }
   }
 }
+
+    
