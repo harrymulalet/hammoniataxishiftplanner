@@ -20,91 +20,92 @@ service cloud.firestore {
       return userDoc.exists && userDoc.data.role == 'driver';
     }
 
-    // User profiles
+    function taxiExistsAndIsActive(taxiId) {
+      let taxiDoc = get(/databases/$(database)/documents/taxis/$(taxiId));
+      return taxiDoc.exists && taxiDoc.data.isActive == true;
+    }
+
+    // User Profiles
     match /users/{userId} {
       allow read: if request.auth != null &&
                     (
                       (request.auth.uid == userId) || // User can read their own profile
                       isAdmin(request.auth.uid)      // Admin can read any profile
                     );
-      allow list: if request.auth != null && 
-                    (
-                      isAdmin(request.auth.uid) || // Admin can list all users
-                      request.auth.uid == 'n6XVw2d4OhU9BJk8OzuMvkSk7nN2' // Explicit allow for specific admin UID for diagnostics
-                    );
+      allow list: if isAdmin(request.auth.uid); // Allows admins to list/query the users collection (e.g., for DriverManagementTable)
 
       allow create: if request.auth != null &&
                       (
-                        // Case 1: User creating their own profile (e.g. future self-registration)
-                        // This part needs to be carefully considered if self-registration is enabled.
-                        // For now, focusing on admin creation.
+                        // Case 1: User creating their own profile (less common in this app structure, but good to have)
                         (request.auth.uid == userId &&
-                         // request.resource.data.role == (request.auth.token.firebase.sign_in_provider == 'password' ? 'driver' : 'admin') && // Default to driver for email/pass
                          request.resource.data.uid == userId &&
                          request.resource.data.email == request.auth.token.email &&
-                         // isTimestamp(request.resource.data.createdAt) && // Let Firestore handle serverTimestamp()
-                         // request.resource.data.createdAt == request.time && // This is problematic with serverTimestamp()
-                         request.resource.data.firstName is string && request.resource.data.firstName.size() > 0 &&
-                         request.resource.data.lastName is string && request.resource.data.lastName.size() > 0
-                         // employeeType is optional for self-creation unless role is driver
-                        )
-                        ||
+                         isTimestamp(request.resource.data.createdAt) && request.resource.data.createdAt == request.time
+                         // Add other fields that a user might set for themselves if self-registration was a feature
+                        ) ||
                         // Case 2: Admin creating a driver profile
                         (isAdmin(request.auth.uid) &&
                          request.resource.data.role == 'driver' &&
-                         request.resource.data.uid == userId &&
+                         request.resource.data.uid == userId && // UID in document must match document ID
                          request.resource.data.email is string && request.resource.data.email.size() > 0 &&
+                         // For admin creating user, we trust serverTimestamp() will be set correctly by client
                          request.resource.data.firstName is string && request.resource.data.firstName.size() > 0 &&
                          request.resource.data.lastName is string && request.resource.data.lastName.size() > 0 &&
                          request.resource.data.employeeType is string && request.resource.data.employeeType.size() > 0
-                         // serverTimestamp() will be handled by Firestore, no direct rule check needed here for `createdAt` value itself
                         )
                       );
 
       allow update: if request.auth != null &&
                       (
-                        // Case 1: User updating their own profile (restricted fields)
+                        // Case 1: User updating their own profile (limited fields)
                         (request.auth.uid == userId &&
-                         (!request.resource.data.containsKey('email') || request.resource.data.email == request.resource.prior.data.email) &&
-                         (!request.resource.data.containsKey('role') || request.resource.data.role == request.resource.prior.data.role) &&
-                         request.resource.data.uid == userId &&
-                         ( // createdAt handling:
-                           (!request.resource.prior.data.containsKey('createdAt') || request.resource.prior.data.createdAt == null) ||
-                           (request.resource.prior.data.createdAt is timestamp && request.resource.data.createdAt == request.resource.prior.data.createdAt)
+                         request.resource.data.uid == userId && // UID cannot change
+                         request.resource.data.email == request.auth.token.email && // Email cannot change
+                         request.resource.data.role == resource.data.role && // Role cannot be changed by user
+                         isTimestamp(request.resource.data.createdAt) && request.resource.data.createdAt == resource.data.createdAt // createdAt cannot change
+                         // Allow changes to firstName, lastName, employeeType
+                        ) ||
+                        // Case 2: Admin updating any user profile
+                        (isAdmin(request.auth.uid) &&
+                         request.resource.data.uid == userId && // UID check for integrity
+                         // Admin can change role, email (though UI might not expose email change), names, employeeType
+                         // Ensure createdAt is handled correctly if admin updates it
+                         // (typically createdAt is immutable, but if admin CAN change it, rule needs to allow it)
+                         // For simplicity, if admin updates, allow createdAt change IF IT WAS INITIALLY NULL or ensure it doesn't change if it exists
+                         (
+                            (!resource.data.containsKey('createdAt') || resource.data.createdAt == null || !isTimestamp(resource.data.createdAt)) || // If old createdAt was not a valid timestamp
+                            (isTimestamp(resource.data.createdAt) && request.resource.data.createdAt == resource.data.createdAt) // Or if it was a timestamp, it must not change
                          )
                         )
-                        ||
-                        // Case 2: Admin updating any profile
-                        (isAdmin(request.auth.uid) &&
-                         request.resource.data.uid == userId
-                         // Simplified: Admin can update fields. createdAt should ideally not change once set.
-                         // If overwriting a stale record, the create rule's logic for createdAt (i.e. allowing serverTimestamp) is more relevant.
-                         // For a targeted update, we'd prevent changing an existing valid createdAt.
-                         // For now, this simplified rule for admin update focuses on identity.
-                        )
                       );
-
       allow delete: if isAdmin(request.auth.uid); // Only admins can delete user profiles
     }
 
     // Taxis
     match /taxis/{taxiId} {
-      allow read: if request.auth != null && 
+      allow read: if request.auth != null &&
                     (
-                      isAdmin(request.auth.uid) || 
-                      (isDriver(request.auth.uid) && resource.data.isActive == true)
+                      (request.resource.data.isActive == true) || // Any authenticated user can read active taxis
+                      isAdmin(request.auth.uid)                   // Admin can read any taxi (active or inactive)
                     );
-      allow list: if request.auth != null && (isAdmin(request.auth.uid) || isDriver(request.auth.uid)); // Drivers can list to see active ones, client filters
+
+      // Admin-only write rules for taxis
       allow create: if isAdmin(request.auth.uid) &&
-                       request.resource.data.id == taxiId &&
-                       request.resource.data.licensePlate is string && request.resource.data.licensePlate.size() > 0 &&
-                       request.resource.data.isActive is bool &&
-                       request.resource.data.createdBy == request.auth.uid;
+                      request.resource.data.licensePlate is string &&
+                      request.resource.data.licensePlate.size() > 0 &&
+                      request.resource.data.isActive is bool &&
+                      request.resource.data.id == taxiId && // Ensure document ID matches internal ID field
+                      request.resource.data.createdBy == request.auth.uid &&
+                      isTimestamp(request.resource.data.createdAt) && request.resource.data.createdAt == request.time;
+
       allow update: if isAdmin(request.auth.uid) &&
-                       request.resource.data.id == taxiId && // if ID is changing, it's a delete + create conceptually
-                       request.resource.data.licensePlate is string && request.resource.data.licensePlate.size() > 0 &&
-                       request.resource.data.isActive is bool &&
-                       request.resource.data.createdBy == request.resource.prior.data.createdBy; // Original creator should not change
+                      request.resource.data.licensePlate is string &&
+                      request.resource.data.licensePlate.size() > 0 &&
+                      request.resource.data.isActive is bool &&
+                      request.resource.data.id == taxiId && // ID field itself should not change here (doc ID changes are transactional deletes+creates)
+                      request.resource.data.createdBy == resource.data.createdBy && // createdBy should not change
+                      isTimestamp(request.resource.data.createdAt) && request.resource.data.createdAt == resource.data.createdAt; // createdAt should not change
+
       allow delete: if isAdmin(request.auth.uid);
     }
 
@@ -112,51 +113,66 @@ service cloud.firestore {
     match /shifts/{shiftId} {
       allow read: if request.auth != null &&
                     (
-                      (request.auth.uid == resource.data.driverId) || // Driver can read their own shifts
-                      isAdmin(request.auth.uid)                     // Admin can read any shift
+                      (request.resource.data.driverId == request.auth.uid) || // Driver can read their own shifts
+                      isAdmin(request.auth.uid) // Admin can read all shifts
                     );
-      allow list: if request.auth != null && (isAdmin(request.auth.uid) || isDriver(request.auth.uid)); // Drivers list their own, Admins list all - client query filters
+      allow list: if request.auth != null &&
+                    (
+                      // For collection queries like "get all shifts for a specific driver"
+                      // This requires driverId to be in the query and match the authenticated user.
+                      // Or if an admin is making the query.
+                      // Firestore rules don't allow filtering list by user directly without query constraints.
+                      // So, client-side queries must include `where("driverId", "==", auth.currentUser.uid)` for drivers.
+                      // Admins can list all if this rule is broad enough, or a specific admin list rule is needed.
+                      // For simplicity, if an admin is querying, we assume their client-side query is appropriate.
+                      isAdmin(request.auth.uid) // Admins can list all shifts (client filters)
+                      // Drivers can list their own shifts if the query is constrained by driverId
+                      // (This rule is effectively checked document-by-document if a driver queries `where("driverId", "==", theirId)`)
+                      || (request.query.limit <= 100 && request.resource.data.driverId == request.auth.uid) // Example if drivers list their own
+                    );
 
       allow create: if request.auth != null &&
-                      get(/databases/$(database)/documents/taxis/$(request.resource.data.taxiId)).data.isActive == true &&
-                      (
-                        // Case 1: Driver creating their own shift
-                        (isDriver(request.auth.uid) &&
-                         request.resource.data.driverId == request.auth.uid &&
-                         isTimestamp(request.resource.data.startTime) &&
-                         isTimestamp(request.resource.data.endTime) &&
-                         request.resource.data.endTime > request.resource.data.startTime
-                        )
-                        ||
-                        // Case 2: Admin creating a shift for any driver
-                        (isAdmin(request.auth.uid) &&
-                         // Admin needs to provide valid driver details
-                         request.resource.data.driverId is string && request.resource.data.driverId.size() > 0 &&
-                         request.resource.data.driverFirstName is string && request.resource.data.driverFirstName.size() > 0 &&
-                         request.resource.data.driverLastName is string && request.resource.data.driverLastName.size() > 0 &&
-                         isTimestamp(request.resource.data.startTime) &&
-                         isTimestamp(request.resource.data.endTime) &&
-                         request.resource.data.endTime > request.resource.data.startTime
-                        )
-                      );
-
-      allow update: if request.auth != null &&
-                      get(/databases/$(database)/documents/taxis/$(request.resource.data.taxiId)).data.isActive == true &&
-                      (
-                        (request.auth.uid == request.resource.prior.data.driverId && // Driver can only update their own shifts
-                         request.resource.data.driverId == request.auth.uid // And cannot change the driverId
-                        ) ||
-                        isAdmin(request.auth.uid) // Admin can update any shift
-                      ) &&
+                      taxiExistsAndIsActive(request.resource.data.taxiId) &&
                       isTimestamp(request.resource.data.startTime) &&
                       isTimestamp(request.resource.data.endTime) &&
-                      request.resource.data.endTime > request.resource.data.startTime;
-                      // Ensure other fields are validated if necessary, e.g., not changing critical old data arbitrarily
+                      request.resource.data.startTime < request.resource.data.endTime &&
+                      (
+                        // Case 1: Driver creating their own shift
+                        (request.resource.data.driverId == request.auth.uid &&
+                         isDriver(request.auth.uid) // Ensure the user creating it has 'driver' role
+                        ) ||
+                        // Case 2: Admin creating a shift for any driver
+                        (isAdmin(request.auth.uid) &&
+                         get(/databases/$(database)/documents/users/$(request.resource.data.driverId)).data.role == 'driver' // Ensure target is a driver
+                        )
+                      ) &&
+                      request.resource.data.taxiLicensePlate is string &&
+                      request.resource.data.driverFirstName is string &&
+                      request.resource.data.driverLastName is string;
+
+      allow update: if request.auth != null &&
+                      taxiExistsAndIsActive(request.resource.data.taxiId) && // Re-check taxi status on update
+                      isTimestamp(request.resource.data.startTime) &&
+                      isTimestamp(request.resource.data.endTime) &&
+                      request.resource.data.startTime < request.resource.data.endTime &&
+                      (
+                        // Driver can update their own shift (driverId cannot change)
+                        (request.resource.data.driverId == request.auth.uid &&
+                         resource.data.driverId == request.resource.data.driverId && // driverId must not change
+                         isDriver(request.auth.uid)
+                        ) ||
+                        // Admin can update any shift
+                        isAdmin(request.auth.uid)
+                      ) &&
+                      request.resource.data.taxiLicensePlate is string &&
+                      request.resource.data.driverFirstName is string &&
+                      request.resource.data.driverLastName is string &&
+                      request.resource.data.createdAt == resource.data.createdAt; // createdAt cannot change
 
       allow delete: if request.auth != null &&
                       (
-                        request.auth.uid == resource.data.driverId || // Driver can delete their own shift
-                        isAdmin(request.auth.uid)                    // Admin can delete any shift
+                        (resource.data.driverId == request.auth.uid && isDriver(request.auth.uid)) || // Driver can delete their own shift
+                        isAdmin(request.auth.uid) // Admin can delete any shift
                       );
     }
   }
