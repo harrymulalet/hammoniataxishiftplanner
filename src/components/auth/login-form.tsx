@@ -2,8 +2,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth"; // Added sendPasswordResetEmail
+import { Eye, EyeOff, Loader2, MailQuestion } from "lucide-react"; // Added MailQuestion
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -22,10 +22,10 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { useAuth } from '@/hooks/useAuth';
-import { useTranslation } from '@/hooks/useTranslation'; // Added
+import { useTranslation } from '@/hooks/useTranslation';
 
 const loginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address." }), // Validation messages could also be translated
+  email: z.string().email({ message: "Invalid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
@@ -35,9 +35,10 @@ export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false); // Added state for reset
   const [showPassword, setShowPassword] = useState(false);
-  const { role } = useAuth(); 
-  const { t } = useTranslation(); // Added
+  const { role } = useAuth();
+  const { t } = useTranslation();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -55,18 +56,48 @@ export function LoginForm() {
         title: t('loginSuccessful'),
         description: t('welcomeBack'),
       });
-      router.push('/'); 
+      router.push('/');
     } catch (error: any) {
       console.error("Login error:", error);
       toast({
         variant: "destructive",
         title: t('loginFailed'),
-        description: error.message || "An unexpected error occurred. Please try again.",
+        description: error.message || t('genericLoginError'), // Use a generic key
       });
     } finally {
       setIsLoading(false);
     }
   }
+
+  const handlePasswordReset = async () => {
+    const emailForReset = window.prompt(t('enterEmailForPasswordReset'));
+    if (emailForReset) {
+      setIsResettingPassword(true);
+      try {
+        await sendPasswordResetEmail(auth, emailForReset);
+        toast({
+          title: t('passwordResetEmailSentTitle'),
+          description: t('passwordResetEmailSentDesc', { email: emailForReset }),
+          duration: 7000,
+        });
+      } catch (error: any) {
+        console.error("Password reset error:", error);
+        let errorMessage = t('passwordResetErrorGeneric');
+        if (error.code === 'auth/user-not-found') {
+          errorMessage = t('passwordResetErrorUserNotFound');
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = t('passwordResetErrorInvalidEmail');
+        }
+        toast({
+          variant: "destructive",
+          title: t('passwordResetErrorTitle'),
+          description: errorMessage,
+        });
+      } finally {
+        setIsResettingPassword(false);
+      }
+    }
+  };
 
   return (
     <Form {...form}>
@@ -126,7 +157,7 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full text-base" disabled={isLoading}>
+        <Button type="submit" className="w-full text-base" disabled={isLoading || isResettingPassword}>
           {isLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
@@ -134,16 +165,18 @@ export function LoginForm() {
           )}
         </Button>
          <div className="text-sm text-center">
-          <a href="#" className="font-medium text-primary hover:text-primary/80" onClick={(e) => {
-            e.preventDefault();
-            toast({ title: t('forgotPasswordToastTitle'), description: t('forgotPasswordToastDesc')});
-          }}>
+          <Button
+            type="button"
+            variant="link"
+            className="font-medium text-primary hover:text-primary/80 p-0 h-auto"
+            onClick={handlePasswordReset}
+            disabled={isResettingPassword || isLoading}
+          >
+            {isResettingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MailQuestion className="mr-1 h-4 w-4" /> }
             {t('forgotPasswordLink')}
-          </a>
+          </Button>
         </div>
       </form>
     </Form>
   );
 }
-
-    

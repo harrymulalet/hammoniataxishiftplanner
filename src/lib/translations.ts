@@ -43,10 +43,21 @@ export const uiStrings = {
   hidePassword: "Hide password",
   // Auth related toasts
   loginSuccessful: "Login Successful",
-  welcomeBack: "Welcome back to ShiftCycle!",
+  welcomeBack: "Welcome back to Hammonia Taxi Shift!",
   loginFailed: "Login Failed",
-  forgotPasswordToastTitle: "Forgot Password",
-  forgotPasswordToastDesc: "Password reset functionality would be here.",
+  genericLoginError: "An unexpected error occurred. Please try again.",
+  // Password Reset
+  enterEmailForPasswordReset: "Please enter your email address to reset your password:",
+  passwordResetEmailSentTitle: "Password Reset Email Sent",
+  passwordResetEmailSentDesc: "If an account exists for {email}, a password reset link has been sent. Please check your inbox (and spam folder).",
+  passwordResetErrorTitle: "Password Reset Failed",
+  passwordResetErrorGeneric: "Could not send password reset email. Please try again later.",
+  passwordResetErrorUserNotFound: "No account found with this email address.",
+  passwordResetErrorInvalidEmail: "The email address provided is not valid.",
+
+  forgotPasswordToastTitle: "Forgot Password", // Old key, can be removed or repurposed if desired
+  forgotPasswordToastDesc: "Password reset functionality would be here.", // Old key
+
   // Driver Dashboard
   driverDashboardTitle: "Driver Dashboard",
   driverDashboardWelcome: "Welcome, {firstName}! Manage your shifts and bookings here.",
@@ -57,17 +68,17 @@ export const uiStrings = {
   bookNewShift: "Book New Shift",
   noShiftsFound: "You have no upcoming or recent shifts.",
   loadingYourShifts: "Loading your shifts...",
-  errorLoadingShifts: "Could not load your shifts.", 
+  errorLoadingShifts: "Could not load your shifts.",
   taxi: "Taxi",
   date: "Date",
   startTime: "Start Time",
   endTime: "End Time",
-  deleteShiftConfirmationTitle: "Delete Shift Confirmation", 
+  deleteShiftConfirmationTitle: "Delete Shift Confirmation",
   deleteShiftConfirmationMessage: "This action cannot be undone. This will permanently delete the shift for taxi {taxiLicensePlate} on {date} from {startTime} to {endTime}.",
   editShiftToastMessage: "Editing shift for {taxiLicensePlate} on {date}. (Edit functionality not fully implemented in this example)",
   noTaxisActive: "No taxis are currently marked as active.",
-  loadingTaxis: "Loading taxis...", 
-  errorLoadingTaxis: "Could not load taxi data.", 
+  loadingTaxis: "Loading taxis...",
+  errorLoadingTaxis: "Could not load taxi data.",
   // Taxi Booking Modal
   bookTaxiShiftTitle: "Book a Taxi Shift",
   bookTaxiShiftDescription: "Select a taxi, date(s), and time for your shift. Max 10 hours per shift.",
@@ -77,12 +88,12 @@ export const uiStrings = {
   errorBookingShift: "Could not book shift(s). Please check for conflicts or try again.",
   bookingConflictTitle: "Booking Conflict",
   bookingConflictDescription: "Taxi is already booked for {date} between {startTime} and {endTime}. Please choose a different time or taxi.",
-  endTimeAfterStartTime: "End time must be after start time. For overnight shifts, ensure the end time (e.g., 02:00) is logically after the start (e.g., 22:00 of the previous day).",
+  endTimeAfterStartTime: "End time must be after start time. For overnight shifts (e.g. 10 PM to 6 AM), this means the end time will be on the next calendar day.",
   shiftDurationMax10Hours: "Shift duration cannot exceed 10 hours.",
   userNotFound: "User not found.",
   // Admin General
   admin: "Admin",
-  driver: "Driver", 
+  driver: "Driver",
   // Admin Sidebar
   adminDrivers: "Drivers",
   adminTaxis: "Taxis",
@@ -95,16 +106,14 @@ export const uiStrings = {
   allDriversDescription: "A list of all registered drivers in the system.",
   addNewDriver: "Add New Driver",
   noDriversFound: "No drivers found.",
-  loadingDrivers: "Loading drivers...", 
-  errorLoadingDriverData: "Could not load driver data.", 
+  loadingDrivers: "Loading drivers...",
+  errorLoadingDriverData: "Could not load driver data.",
   driverName: "Name",
   employeeType: "Employee Type",
   editDriver: "Edit driver",
   deleteDriver: "Delete driver",
   deleteDriverProfileConfirmationMessage: "This will delete the driver profile for {firstName} {lastName}. The Firebase Authentication user account will need to be deleted manually from the Firebase Console. This action cannot be undone.",
   deleteProfile: "Delete Profile",
-  partialDeletion: "Partial Deletion", // Old key, can be removed or repurposed if desired
-  partialDeletionDesc: "Driver profile in database deleted. Firebase Auth user must be deleted manually from Firebase Console for full removal.", // Old key
   driverProfileUpdatedSuccessfully: "Driver profile updated successfully.",
   driverCreatedSuccessfully: "Driver Created",
   driverCreatedDesc: "{firstName} {lastName} added. Password: {password} (Please communicate securely and advise driver to change it).",
@@ -145,16 +154,16 @@ export const uiStrings = {
   allTaxisDescription: "A list of all registered taxis in the system.",
   addNewTaxi: "Add New Taxi",
   noTaxisFound: "No taxis found. Add one to get started.",
-  loadingTaxisAdmin: "Loading taxis...", 
-  errorLoadingTaxisAdmin: "Could not load taxi data.", 
+  loadingTaxisAdmin: "Loading taxis...",
+  errorLoadingTaxisAdmin: "Could not load taxi data.",
   licensePlate: "License Plate",
-  toggleTaxiStatus: "{status} taxi", 
+  toggleTaxiStatus: "{status} taxi",
   activateTaxi: "Activate taxi",
   deactivateTaxi: "Deactivate taxi",
   editTaxi: "Edit taxi",
   deleteTaxi: "Delete taxi",
   deleteTaxiConfirmationMessage: "This will permanently delete the taxi with license plate {licensePlate}. This action cannot be undone. Consider deactivating it instead if it might be used later.",
-  taxiStatusUpdated: "Taxi {licensePlate} {status}.", 
+  taxiStatusUpdated: "Taxi {licensePlate} {status}.",
   activated: "activated",
   deactivated: "deactivated",
   errorUpdatingTaxiStatus: "Could not update taxi status.",
@@ -188,8 +197,8 @@ export const uiStrings = {
   filterByTaxi: "Filter by Taxi",
   allTaxisPlaceholder: "All Taxis",
   filterByDate: "Filter by Date",
-  loadingAllShifts: "Loading all shifts...", 
-  errorLoadingAllShifts: "Could not load shifts data.", 
+  loadingAllShifts: "Loading all shifts...",
+  errorLoadingAllShifts: "Could not load shifts data.",
   noShiftsMatchFilters: "No shifts match your filters, or no shifts found.",
   shiftDeletedSuccessfully: "Shift deleted successfully.",
   errorDeletingShift: "Could not delete shift.",
@@ -211,9 +220,9 @@ export const uiStrings = {
   errorLoadingTaxiUtilization: "Could not load taxi utilization data.",
   errorLoadingShiftsOverTime: "Could not load shifts over time data.",
   // Employee Types (from lib/types.ts) - these are more like data than UI strings but good to have keys if they appear in UI
-  employeeTypeFullTime: "Vollzeit Mitarbeiter",
-  employeeTypePartTime: "Aushilfe",
-  employeeTypeOther: "Sonstiges",
+  employeeTypeFullTime: "Full-Time Employee",
+  employeeTypePartTime: "Part-Time Employee",
+  employeeTypeOther: "Other",
   // Chart specific
   shiftsBookedLabel: "Shifts Booked",
   hoursBookedLabel: "Hours Booked",
@@ -240,8 +249,8 @@ export const uiStrings = {
 
 export type TranslationKey = keyof typeof uiStrings;
 
-export const translations: Record<Locale, Partial<typeof uiStrings>> = { 
-  en: uiStrings, 
+export const translations: Record<Locale, Partial<typeof uiStrings>> = {
+  en: uiStrings,
   de: {
     // Common
     actions: "Aktionen",
@@ -279,10 +288,18 @@ export const translations: Record<Locale, Partial<typeof uiStrings>> = {
     hidePassword: "Passwort ausblenden",
     // Auth related toasts
     loginSuccessful: "Anmeldung erfolgreich",
-    welcomeBack: "Willkommen zurück bei ShiftCycle!",
+    welcomeBack: "Willkommen zurück bei Hammonia Taxi Shift!",
     loginFailed: "Anmeldung fehlgeschlagen",
-    forgotPasswordToastTitle: "Passwort vergessen",
-    forgotPasswordToastDesc: "Die Funktion zum Zurücksetzen des Passworts wäre hier.",
+    genericLoginError: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    // Password Reset
+    enterEmailForPasswordReset: "Bitte geben Sie Ihre E-Mail-Adresse ein, um Ihr Passwort zurückzusetzen:",
+    passwordResetEmailSentTitle: "E-Mail zum Zurücksetzen des Passworts gesendet",
+    passwordResetEmailSentDesc: "Wenn ein Konto für {email} existiert, wurde ein Link zum Zurücksetzen des Passworts gesendet. Bitte überprüfen Sie Ihren Posteingang (und Spam-Ordner).",
+    passwordResetErrorTitle: "Fehler beim Zurücksetzen des Passworts",
+    passwordResetErrorGeneric: "Die E-Mail zum Zurücksetzen des Passworts konnte nicht gesendet werden. Bitte versuchen Sie es später erneut.",
+    passwordResetErrorUserNotFound: "Kein Konto mit dieser E-Mail-Adresse gefunden.",
+    passwordResetErrorInvalidEmail: "Die angegebene E-Mail-Adresse ist ungültig.",
+
     // Driver Dashboard
     driverDashboardTitle: "Fahrer-Dashboard",
     driverDashboardWelcome: "Willkommen, {firstName}! Verwalten Sie hier Ihre Schichten und Buchungen.",
@@ -312,7 +329,7 @@ export const translations: Record<Locale, Partial<typeof uiStrings>> = {
     errorBookingShift: "Schicht(en) konnten nicht gebucht werden. Bitte auf Konflikte prüfen oder erneut versuchen.",
     bookingConflictTitle: "Buchungskonflikt",
     bookingConflictDescription: "Das Taxi ist bereits für den {date} zwischen {startTime} und {endTime} gebucht. Bitte eine andere Zeit oder ein anderes Taxi wählen.",
-    endTimeAfterStartTime: "Die Endzeit muss nach der Startzeit liegen. Bei Nachtschichten sicherstellen, dass die Endzeit (z.B. 02:00 Uhr) logisch nach dem Start (z.B. 22:00 Uhr des Vortages) liegt.",
+    endTimeAfterStartTime: "Die Endzeit muss nach der Startzeit liegen. Bei Nachtschichten (z.B. 22:00 bis 06:00 Uhr) bedeutet dies, dass die Endzeit am nächsten Kalendertag liegt.",
     shiftDurationMax10Hours: "Die Schichtdauer darf 10 Stunden nicht überschreiten.",
     userNotFound: "Benutzer nicht gefunden.",
     // Admin General
@@ -336,7 +353,7 @@ export const translations: Record<Locale, Partial<typeof uiStrings>> = {
     employeeType: "Anstellungsart",
     editDriver: "Fahrer bearbeiten",
     deleteDriver: "Fahrer löschen",
-    deleteDriverProfileConfirmationMessage: "Dadurch wird das Fahrerprofil für {firstName} {lastName} gelöscht. Das Firebase-Authentifizierungsbenutzerkonto muss manuell aus der Firebase-Konsole gelöscht werden. Diese Aktion kann nicht rückgängig gemacht werden.", // Old key
+    deleteDriverProfileConfirmationMessage: "Dadurch wird das Fahrerprofil für {firstName} {lastName} gelöscht. Das Firebase-Authentifizierungsbenutzerkonto muss manuell aus der Firebase-Konsole gelöscht werden. Diese Aktion kann nicht rückgängig gemacht werden.",
     deleteProfile: "Profil löschen",
     driverProfileUpdatedSuccessfully: "Fahrerprofil erfolgreich aktualisiert.",
     driverCreatedSuccessfully: "Fahrer erstellt",
