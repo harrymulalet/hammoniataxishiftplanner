@@ -47,16 +47,15 @@ export const uiStrings = {
   loginFailed: "Login Failed",
   genericLoginError: "An unexpected error occurred. Please try again.",
   // Password Reset
-  enterEmailForPasswordReset: "Please enter your email address to reset your password:",
+  enterEmailForPasswordReset: "Please enter your email address to reset your password:", // Kept for reference, not used by new UI
+  emailForPasswordResetLabel: "Email for Password Reset",
+  sendResetLinkButton: "Send Reset Link",
   passwordResetEmailSentTitle: "Password Reset Email Sent",
   passwordResetEmailSentDesc: "If an account exists for {email}, a password reset link has been sent. Please check your inbox (and spam folder).",
   passwordResetErrorTitle: "Password Reset Failed",
   passwordResetErrorGeneric: "Could not send password reset email. Please try again later.",
   passwordResetErrorUserNotFound: "No account found with this email address.",
   passwordResetErrorInvalidEmail: "The email address provided is not valid.",
-
-  forgotPasswordToastTitle: "Forgot Password", // Old key, can be removed or repurposed if desired
-  forgotPasswordToastDesc: "Password reset functionality would be here.", // Old key
 
   // Driver Dashboard
   driverDashboardTitle: "Driver Dashboard",
@@ -293,6 +292,8 @@ export const translations: Record<Locale, Partial<typeof uiStrings>> = {
     genericLoginError: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
     // Password Reset
     enterEmailForPasswordReset: "Bitte geben Sie Ihre E-Mail-Adresse ein, um Ihr Passwort zurückzusetzen:",
+    emailForPasswordResetLabel: "E-Mail für Passwortzurücksetzung",
+    sendResetLinkButton: "Link zum Zurücksetzen senden",
     passwordResetEmailSentTitle: "E-Mail zum Zurücksetzen des Passworts gesendet",
     passwordResetEmailSentDesc: "Wenn ein Konto für {email} existiert, wurde ein Link zum Zurücksetzen des Passworts gesendet. Bitte überprüfen Sie Ihren Posteingang (und Spam-Ordner).",
     passwordResetErrorTitle: "Fehler beim Zurücksetzen des Passworts",
