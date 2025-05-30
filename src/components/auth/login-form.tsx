@@ -40,6 +40,8 @@ export function LoginForm() {
   const { role } = useAuth();
   const { t } = useTranslation();
 
+  console.log("[DEBUG] LoginForm rendering. Initial states - isLoading:", isLoading, "isResettingPassword:", isResettingPassword);
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -70,38 +72,62 @@ export function LoginForm() {
   }
 
   const handlePasswordReset = async () => {
-    console.log("handlePasswordReset triggered. Current states: isResettingPassword =", isResettingPassword, ", isLoading =", isLoading);
+    console.log("[DEBUG] handlePasswordReset called. Current states: isResettingPassword =", isResettingPassword, ", isLoading =", isLoading);
+    console.log("[DEBUG] typeof t:", typeof t);
+
+    // Prevent concurrent operations
+    if (isLoading) {
+        console.log("[DEBUG] Main form is loading, aborting password reset.");
+        toast({ title: t('loading'), description: "Please wait for the current operation to complete."});
+        return;
+    }
+    if (isResettingPassword) {
+        console.log("[DEBUG] Password reset already in progress, aborting.");
+        toast({ title: t('loading'), description: "Password reset is already in progress."});
+        return;
+    }
+
+    const promptMessageKey: 'enterEmailForPasswordReset' = 'enterEmailForPasswordReset';
+    const promptMessage = t(promptMessageKey);
+    console.log("[DEBUG] Prompt message key:", promptMessageKey, "Translated message:", promptMessage);
+
     let emailForReset: string | null = null;
     try {
-      emailForReset = window.prompt(t('enterEmailForPasswordReset'));
+      console.log("[DEBUG] About to call window.prompt with message:", promptMessage);
+      emailForReset = window.prompt(promptMessage);
+      console.log("[DEBUG] window.prompt returned:", emailForReset);
     } catch (promptError: any) {
-      console.error("Error during window.prompt or translation for password reset:", promptError);
+      console.error("[DEBUG] Error during window.prompt execution:", promptError);
       toast({
         variant: "destructive",
         title: t('error'),
-        description: "Could not display password reset prompt.",
+        description: t('passwordResetErrorGeneric') + " (Prompt display issue). " + (promptError.message || ""),
       });
-      setIsResettingPassword(false); // Ensure state is reset if prompt fails
-      return;
+      // No need to set isResettingPassword to false here, as it wasn't set to true yet.
+      return; // Exit if prompt itself errors critically
     }
 
-    if (emailForReset) {
+    if (emailForReset && emailForReset.trim() !== "") { // Check if email is not null and not just whitespace
       setIsResettingPassword(true);
+      console.log("[DEBUG] setIsResettingPassword(true). Email for reset:", emailForReset);
       try {
+        console.log(`[DEBUG] Attempting to send password reset email to: ${emailForReset}`);
         await sendPasswordResetEmail(auth, emailForReset);
         toast({
           title: t('passwordResetEmailSentTitle'),
           description: t('passwordResetEmailSentDesc', { email: emailForReset }),
           duration: 7000,
         });
+        console.log(`[DEBUG] Password reset email sent successfully to: ${emailForReset}`);
       } catch (error: any) {
-        console.error("Password reset error:", error);
+        console.error("[DEBUG] Firebase sendPasswordResetEmail error:", error, "Code:", error.code);
         let errorMessage = t('passwordResetErrorGeneric');
         if (error.code === 'auth/user-not-found') {
           errorMessage = t('passwordResetErrorUserNotFound');
         } else if (error.code === 'auth/invalid-email') {
           errorMessage = t('passwordResetErrorInvalidEmail');
         }
+        // You could add more specific Firebase error code handling here
         toast({
           variant: "destructive",
           title: t('passwordResetErrorTitle'),
@@ -109,9 +135,12 @@ export function LoginForm() {
         });
       } finally {
         setIsResettingPassword(false);
+        console.log("[DEBUG] setIsResettingPassword(false) in finally block.");
       }
     } else {
-      console.log("Password reset prompt cancelled or no email entered.");
+      console.log("[DEBUG] Password reset prompt cancelled by user or no email entered. Value received:", emailForReset);
+      // Optionally, provide a toast if the prompt was cancelled
+      // toast({ title: "Password Reset Cancelled", description: "No email was entered." });
     }
   };
 
@@ -186,9 +215,9 @@ export function LoginForm() {
             variant="link"
             className="font-medium text-primary hover:text-primary/80 p-0 h-auto"
             onClick={handlePasswordReset}
-            disabled={isResettingPassword || isLoading}
+            disabled={isResettingPassword || isLoading} // Keep this disabled logic, it's important.
           >
-            {isResettingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MailQuestion className="mr-1 h-4 w-4" /> }
+            {(isResettingPassword) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MailQuestion className="mr-1 h-4 w-4" /> }
             {t('forgotPasswordLink')}
           </Button>
         </div>
